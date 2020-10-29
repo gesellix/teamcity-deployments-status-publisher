@@ -1,0 +1,34 @@
+version: "3"
+
+services:
+  tc-server:
+    image: jetbrains/teamcity-server:2017.2.2
+    networks:
+      - teamcity
+    ports:
+      - "8111:8111"
+    volumes:
+#      - tc-server
+      - ./data/tc-server/datadir:/data/teamcity_server/datadir
+  tc-agent:
+    image: jetbrains/teamcity-minimal-agent:2017.2.2
+    environment:
+      - "SERVER_URL=http://tc-server:8111"
+      - "AGENT_NAME=agent-1"
+    networks:
+      - teamcity
+    ports:
+      - "9090:9090"
+    volumes:
+#      - tc-agent
+      - ./data/tc-agent/conf:/data/teamcity_agent/conf
+
+networks:
+  teamcity:
+#    external: true
+
+#volumes:
+#  tc-server:
+#    external: true
+#  tc-agent:
+#    external: true
