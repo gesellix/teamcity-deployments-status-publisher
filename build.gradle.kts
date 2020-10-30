@@ -2,13 +2,12 @@ plugins {
   kotlin("jvm") version "1.3.72" apply false
   id("com.github.rodm.teamcity-server") version "1.3.1" apply false
   id("com.github.rodm.teamcity-environments") version "1.3.1" apply false
-//  id("com.github.rodm.teamcity-server") version "1.2" apply false
 }
 
 group = "de.gesellix"
-//version = "1.0-SNAPSHOT"
+version = "0.1"
 
-extra["teamcityVersion"] = findProperty("teamcity.version") ?: "2017.2" // "2019.1"
+extra["teamcityVersion"] = findProperty("teamcity.version") ?: "2017.2"
 
 allprojects {
   repositories {

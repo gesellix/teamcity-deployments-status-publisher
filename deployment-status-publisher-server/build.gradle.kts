@@ -14,9 +14,6 @@ val teamcityVersion = rootProject.extra["teamcityVersion"] as String
 //val agent = configurations.getByName("agent")
 
 dependencies {
-//  api("org.apache.commons:commons-math3:3.6.1")
-//  implementation("com.google.guava:guava:29.0-jre")
-
   implementation(project(":deployment-status-publisher-common"))
 //  agent (project(path = ":agent", configuration = "plugin"))
 
@@ -47,31 +44,26 @@ tasks {
 
 teamcity {
   version = teamcityVersion
-//  version = "2017.2"
-//  version = "2020.1"
 
-//  server {
-//    archiveName = "github-deployments.zip"
+  server {
+    archiveName = "github-deployments-status-publisher.zip"
 //    descriptor = file("teamcity-plugin.xml")
 //    tokens = mapOf("Version" to pluginVersion)
-//
+    descriptor {
+      name = "GitHub Deployments Status TeamCity Plugin"
+      displayName = "GitHub Deployments Status TeamCity Plugin"
+      version = rootProject.version as String?
+      vendorName = "gesellix"
+      vendorUrl = "https://www.gesellix.net"
+      description = "GitHub Deployments Status TeamCity Plugin"
+      email = "tobias@gesellix.de"
+      useSeparateClassloader = true
+    }
 //    files {
 //      into("kotlin-dsl") {
 //        from("src/kotlin-dsl")
 //      }
 //    }
-//  }
-  server {
-    descriptor {
-      name = "Example TeamCity Plugin"
-      displayName = "Example TeamCity Plugin"
-      version = rootProject.version as String?
-      vendorName = "rodm"
-      vendorUrl = "https://example.com"
-      description = "Example multi-project TeamCity plugin"
-      email = "rod.n.mackenzie@gmail.com"
-      useSeparateClassloader = true
-    }
   }
 
   environments {
