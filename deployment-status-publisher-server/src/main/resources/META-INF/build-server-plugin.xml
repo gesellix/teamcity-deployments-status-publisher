@@ -2,5 +2,8 @@
 <!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
 
 <beans default-autowire="constructor">
-  <bean id="exampleBuildFeature" class="example.server.ServerExampleBuildFeature"/>
+  <bean id="gitHubDeploymentsStatusPublisherBuildFeature" class="de.gesellix.teamcity.github.deployments.server.GitHubDeploymentsStatusPublisherFeature"/>
+  <bean id="gitHubDeploymentsStatusPublisherFeatureController" class="de.gesellix.teamcity.github.deployments.server.GitHubDeploymentsStatusPublisherFeatureController"/>
+  <bean id="publisherSettingsController" class="de.gesellix.teamcity.github.deployments.server.PublisherSettingsController"/>
+  <bean id="publisherManager" class="de.gesellix.teamcity.github.deployments.server.PublisherManager"/>
 </beans>

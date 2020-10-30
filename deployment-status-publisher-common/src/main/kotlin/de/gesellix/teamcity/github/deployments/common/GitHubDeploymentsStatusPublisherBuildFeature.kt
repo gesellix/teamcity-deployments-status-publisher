@@ -1,10 +1,10 @@
-package example.common
+package de.gesellix.teamcity.github.deployments.common
 
 import jetbrains.buildServer.util.StringUtil
 
-object ExampleBuildFeature {
+object GitHubDeploymentsStatusPublisherBuildFeature {
 
-  const val BUILD_FEATURE_NAME = "example"
+  const val BUILD_FEATURE_NAME = "github-deployments-status-publisher"
 
   init {
     // Just simple usage of TeamCity Common API (shared between server and agent)
