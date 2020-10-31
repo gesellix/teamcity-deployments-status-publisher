@@ -88,6 +88,7 @@ teamcity {
 //
     register("teamcity2017.2") {
       version = "2017.2"
+      dataDir = file("${rootDir}/data/tc-server/datadir")
 //      javaHome = file(extra["java8Home"] as String)
     }
   }
