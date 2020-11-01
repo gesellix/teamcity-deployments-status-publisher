@@ -1,4 +1,4 @@
-# GitHub Deployments TeamCity Plugin
+# Deployments TeamCity Plugin
 
 Based on the [Gradle TeamCity plugin](https://github.com/rodm/gradle-teamcity-plugin) with
 a lot of inspiration from [Teamcity Commit Status Publisher](https://github.com/JetBrains/commit-status-publisher).

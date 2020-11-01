@@ -7,11 +7,13 @@ import jetbrains.buildServer.serverSide.SProject
 import jetbrains.buildServer.serverSide.oauth.OAuthConnectionDescriptor
 import jetbrains.buildServer.users.SUser
 import jetbrains.buildServer.vcs.VcsRoot
-import java.security.KeyStore
-
-const val ID = "--"
 
 internal class DummyPublisherSettings : GitHubDeploymentsStatusPublisherSettings {
+
+  companion object {
+
+    const val ID = "--"
+  }
 
   override fun getId(): String {
     return ID
@@ -21,42 +23,24 @@ internal class DummyPublisherSettings : GitHubDeploymentsStatusPublisherSettings
     return "--Choose publisher--"
   }
 
-  override fun getEditSettingsUrl(): String? {
-    return null
-  }
-
-  fun createPublisher(buildType: SBuildType, buildFeatureId: String, params: Map<String?, String?>): GitHubDeploymentsStatusPublisherFeature? {
-    return null
-  }
-
-  val defaultParameters: Map<String, String>?
-    get() = null
-
-  override fun transformParameters(params: Map<String, String>): Map<String, String> {
-    return emptyMap()
+  override fun isEnabled(): Boolean {
+    return true
   }
 
   override fun describeParameters(params: Map<String, String>): String {
     return ""
   }
 
-  val parametersProcessor: PropertiesProcessor?
-    get() = null
-
   override fun getOAuthConnections(project: SProject, user: SUser): Map<OAuthConnectionDescriptor, Boolean> {
     return emptyMap()
   }
 
-  override fun isEnabled(): Boolean {
-    return true
+  override fun transformParameters(params: Map<String, String>): Map<String, String> {
+    return emptyMap()
   }
 
-  fun isPublishingForVcsRoot(vcsRoot: VcsRoot?): Boolean {
-    return true
-  }
-
-  fun isEventSupported(event: GitHubDeploymentsStatusPublisher.Event?, buildType: SBuildType?, params: Map<String?, String?>?): Boolean {
-    return false
+  override fun getEditSettingsUrl(): String? {
+    return null
   }
 
   override fun isTestConnectionSupported(): Boolean {
@@ -64,11 +48,23 @@ internal class DummyPublisherSettings : GitHubDeploymentsStatusPublisherSettings
   }
 
   @Throws(PublisherException::class)
-  fun testConnection(buildTypeOrTemplate: BuildTypeIdentity, root: VcsRoot, params: Map<String?, String?>) {
+  override fun testConnection(buildTypeOrTemplate: BuildTypeIdentity, root: VcsRoot, params: Map<String, String>) {
     // does nothing
   }
 
-  fun trustStore(): KeyStore? {
+  override fun getParametersProcessor(): PropertiesProcessor? {
     return null
+  }
+
+  override fun createPublisher(buildType: SBuildType, buildFeatureId: String, params: Map<String, String>): GitHubDeploymentsStatusPublisher? {
+    return null
+  }
+
+  override fun isPublishingForVcsRoot(vcsRoot: VcsRoot?): Boolean {
+    return true
+  }
+
+  override fun isEventSupported(event: GitHubDeploymentsStatusPublisher.Event, buildType: SBuildType, params: Map<String, String>): Boolean {
+    return false
   }
 }

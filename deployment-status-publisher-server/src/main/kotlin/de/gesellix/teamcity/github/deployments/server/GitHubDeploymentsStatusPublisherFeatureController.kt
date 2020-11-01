@@ -18,8 +18,7 @@ class GitHubDeploymentsStatusPublisherFeatureController(controllerManager: WebCo
                                                         private val projectManager: ProjectManager,
                                                         private val descriptor: PluginDescriptor,
                                                         private val publisherManager: PublisherManager,
-                                                        private val publisherSettingsController: PublisherSettingsController
-                                                        ) : BaseController() {
+                                                        private val publisherSettingsController: PublisherSettingsController) : BaseController() {
 
   private val resourceUrl: String = descriptor.getPluginResourcesPath("gitHubDeploymentsStatusPublisherFeature.html")
 
@@ -73,9 +72,9 @@ class GitHubDeploymentsStatusPublisherFeatureController(controllerManager: WebCo
       if (null == vcsRoot) {
         mv.addObject("hasMissingVcsRoot", true)
         vcsRoot = if (null != internalId) {
-          projectManager!!.findVcsRootById(internalId)
+          projectManager.findVcsRootById(internalId)
         } else {
-          projectManager!!.findVcsRootByExternalId(vcsRootId!!)
+          projectManager.findVcsRootByExternalId(vcsRootId!!)
         }
         if (null != vcsRoot) {
           mv.addObject("missingVcsRoot", vcsRoot)
@@ -99,13 +98,13 @@ class GitHubDeploymentsStatusPublisherFeatureController(controllerManager: WebCo
   }
 
   private fun createAddPublisherModel(): ModelAndView {
-    val mv = ModelAndView(descriptor!!.getPluginResourcesPath("addPublisher.jsp"))
+    val mv = ModelAndView(descriptor.getPluginResourcesPath("addPublisher.jsp"))
     mv.addObject("publishers", getPublisherSettings(true))
     return mv
   }
 
   private fun createEditPublisherModel(publisherId: String): ModelAndView {
-    val mv = ModelAndView(descriptor!!.getPluginResourcesPath("editPublisher.jsp"))
+    val mv = ModelAndView(descriptor.getPluginResourcesPath("editPublisher.jsp"))
     mv.addObject("publishers", getPublisherSettings(false))
     val publisherSettings: GitHubDeploymentsStatusPublisherSettings? = publisherManager.findSettings(publisherId)
     if (publisherSettings != null) {

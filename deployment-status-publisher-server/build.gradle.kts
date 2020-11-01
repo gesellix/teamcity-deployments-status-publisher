@@ -40,22 +40,29 @@ tasks {
   compileTestKotlin {
     kotlinOptions.jvmTarget = "1.8"
   }
+
+  val testNg by creating(Test::class) {
+    useTestNG()
+  }
+  check {
+    dependsOn(testNg)
+  }
 }
 
 teamcity {
   version = teamcityVersion
 
   server {
-    archiveName = "github-deployments-status-publisher.zip"
+    archiveName = "deployments-status-publisher.zip"
 //    descriptor = file("teamcity-plugin.xml")
 //    tokens = mapOf("Version" to pluginVersion)
     descriptor {
-      name = "GitHub Deployments Status TeamCity Plugin"
-      displayName = "GitHub Deployments Status TeamCity Plugin"
+      name = "Deployments Status TeamCity Plugin"
+      displayName = "Deployments Status TeamCity Plugin"
       version = rootProject.version as String?
       vendorName = "gesellix"
       vendorUrl = "https://www.gesellix.net"
-      description = "GitHub Deployments Status TeamCity Plugin"
+      description = "Deployments Status TeamCity Plugin"
       email = "tobias@gesellix.de"
       useSeparateClassloader = true
     }

@@ -1,6 +1,5 @@
 package de.gesellix.teamcity.github.deployments.server
 
-import com.intellij.openapi.diagnostic.Logger
 import jetbrains.buildServer.serverSide.BuildRevision
 import jetbrains.buildServer.serverSide.SBuild
 import jetbrains.buildServer.serverSide.SBuildType
@@ -73,8 +72,5 @@ interface GitHubDeploymentsStatusPublisher {
   companion object {
 
     private const val PUBLISHING_TASK_PREFIX = "publishDeploymentsStatus"
-
-    const val LOG_CATEGORY = "jetbrains.buildServer.DEPLOYMENTS_STATUS"
-    val LOG = Logger.getInstance(LOG_CATEGORY)
   }
 }
