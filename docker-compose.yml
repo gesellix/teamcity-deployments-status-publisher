@@ -3,9 +3,12 @@ version: "3"
 services:
   tc-server:
     image: jetbrains/teamcity-server:2017.2.2
+    environment:
+      - "TEAMCITY_SERVER_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
     networks:
       - teamcity
     ports:
+      - "5005:5005"
       - "8111:8111"
     volumes:
 #      - tc-server

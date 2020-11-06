@@ -1,0 +1,149 @@
+package de.gesellix.teamcity.deployments.server;
+
+import jetbrains.buildServer.messages.Status;
+import jetbrains.buildServer.serverSide.BuildRevision;
+import jetbrains.buildServer.serverSide.SBuild;
+import jetbrains.buildServer.serverSide.SBuildType;
+import jetbrains.buildServer.serverSide.SFinishedBuild;
+import jetbrains.buildServer.serverSide.SRunningBuild;
+import jetbrains.buildServer.users.User;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
+
+/**
+ * @author anton.zamolotskikh, 13/09/16.
+ */
+class MockPublisher extends BaseCommitStatusPublisher implements DeploymentsStatusPublisher {
+
+  static final String PUBLISHER_ERROR = "Simulated publisher exception";
+
+  private final String myType;
+  private String myVcsRootId = null;
+
+  private int myFailuresReceived = 0;
+  private int myFinishedReceived = 0;
+  private int mySuccessReceived = 0;
+  private int myStartedReceived = 0;
+  private int myCommentedReceived = 0;
+  private String myLastComment = null;
+
+  private boolean myShouldThrowException = false;
+  private boolean myShouldReportError = false;
+  private final PublisherLogger myLogger;
+
+  boolean isFailureReceived() {
+    return myFailuresReceived > 0;
+  }
+
+  boolean isFinishedReceived() {
+    return myFinishedReceived > 0;
+  }
+
+  boolean isSuccessReceived() {
+    return mySuccessReceived > 0;
+  }
+
+  boolean isStartedReceived() {
+    return myStartedReceived > 0;
+  }
+
+  boolean isCommentedReceived() {
+    return myCommentedReceived > 0;
+  }
+
+  String getLastComment() {
+    return myLastComment;
+  }
+
+  MockPublisher(@NotNull DeploymentsStatusPublisherSettings settings,
+                @NotNull String publisherType,
+                @NotNull SBuildType buildType, @NotNull String buildFeatureId,
+                @NotNull Map<String, String> params,
+                @NotNull DeploymentsStatusPublisherProblems problems,
+                @NotNull PublisherLogger logger) {
+    super(settings, buildType, buildFeatureId, params, problems);
+    myLogger = logger;
+    myType = publisherType;
+  }
+
+  @Nullable
+  @Override
+  public String getVcsRootId() {
+    return myVcsRootId;
+  }
+
+  void setVcsRootId(String vcsRootId) {
+    myVcsRootId = vcsRootId;
+  }
+
+  @NotNull
+  @Override
+  public String getId() {
+    return myType;
+  }
+
+  int failuresReceived() {
+    return myFailuresReceived;
+  }
+
+  int finishedReceived() {
+    return myFinishedReceived;
+  }
+
+  int successReceived() {
+    return mySuccessReceived;
+  }
+
+  void shouldThrowException() {
+    myShouldThrowException = true;
+  }
+
+  void shouldReportError() {
+    myShouldReportError = true;
+  }
+
+  @Override
+  public boolean buildStarted(@NotNull final SRunningBuild build, @NotNull final BuildRevision revision) {
+    myStartedReceived++;
+    return true;
+  }
+
+  @Override
+  public boolean buildFinished(@NotNull SFinishedBuild build, @NotNull BuildRevision revision) throws PublisherException {
+    myFinishedReceived++;
+    Status s = build.getBuildStatus();
+    if (s.equals(Status.NORMAL)) { mySuccessReceived++; }
+    if (s.equals(Status.FAILURE)) { myFailuresReceived++; }
+    if (myShouldThrowException) {
+      throw new PublisherException(PUBLISHER_ERROR);
+    }
+    else if (myShouldReportError) {
+      getProblems().reportProblem(this, "My build", null, null, myLogger);
+    }
+    return true;
+  }
+
+  @Override
+  public boolean buildCommented(@NotNull final SBuild build,
+                                @NotNull final BuildRevision revision,
+                                @Nullable final User user,
+                                @Nullable final String comment,
+                                final boolean buildInProgress) {
+    myCommentedReceived++;
+    myLastComment = comment;
+    return true;
+  }
+
+  @Override
+  public boolean buildFailureDetected(@NotNull SRunningBuild build, @NotNull BuildRevision revision) {
+    myFailuresReceived++;
+    return true;
+  }
+
+  @Override
+  public boolean buildMarkedAsSuccessful(@NotNull SBuild build, @NotNull BuildRevision revision, boolean buildInProgress) throws PublisherException {
+    return super.buildMarkedAsSuccessful(build, revision, buildInProgress);
+  }
+}
