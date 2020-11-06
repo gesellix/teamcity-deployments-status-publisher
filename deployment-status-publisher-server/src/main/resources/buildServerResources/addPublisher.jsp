@@ -1,2 +1,2 @@
-<%@include file="publisherFeatureHeader.jsp"%>
+<%@include file="publisherFeatureHeader.jsp" %>
 <tbody id="publisherProperties"/>

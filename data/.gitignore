@@ -1,2 +1,4 @@
 tc-agent/conf/*
+tc-agent/sync/*
 tc-server/datadir/*
+tc-server/sync/*

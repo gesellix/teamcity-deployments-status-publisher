@@ -2,8 +2,19 @@
 <!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
 
 <beans default-autowire="constructor">
-  <bean id="gitHubDeploymentsStatusPublisherBuildFeature" class="de.gesellix.teamcity.github.deployments.server.GitHubDeploymentsStatusPublisherFeature"/>
-  <bean id="gitHubDeploymentsStatusPublisherFeatureController" class="de.gesellix.teamcity.github.deployments.server.GitHubDeploymentsStatusPublisherFeatureController"/>
-  <bean id="publisherSettingsController" class="de.gesellix.teamcity.github.deployments.server.PublisherSettingsController"/>
-  <bean id="publisherManager" class="de.gesellix.teamcity.github.deployments.server.PublisherManager"/>
+  <bean id="problems" class="de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisherProblems"/>
+  <bean id="deploymentsStatusPublisherBuildFeature" class="de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisherFeature"/>
+  <bean id="deploymentsStatusPublisherListener" class="de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisherListener"/>
+  <bean id="publisherSettingsController" class="de.gesellix.teamcity.deployments.server.PublisherSettingsController"/>
+  <bean class="de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisherFeatureController"/>
+  <bean class="de.gesellix.teamcity.deployments.server.PublisherManager"/>
+
+  <bean class="de.gesellix.teamcity.deployments.server.github.ChangeStatusUpdater"/>
+  <bean class="de.gesellix.teamcity.deployments.server.github.api.impl.GitHubApiFactoryImpl"/>
+  <bean class="de.gesellix.teamcity.deployments.server.github.api.impl.HttpClientWrapperImpl" destroy-method="dispose"/>
+  <bean class="de.gesellix.teamcity.deployments.server.github.GitHubSettings"/>
+
+  <bean class="de.gesellix.teamcity.deployments.server.ServerListener">
+    <constructor-arg index="0" ref="configActionsDispatcher"/>
+  </bean>
 </beans>
