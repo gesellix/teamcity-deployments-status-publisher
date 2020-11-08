@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
   kotlin("jvm")
   id("com.github.rodm.teamcity-server")
@@ -52,10 +54,7 @@ dependencies {
 }
 
 tasks {
-  compileKotlin {
-    kotlinOptions.jvmTarget = "1.8"
-  }
-  compileTestKotlin {
+  withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "1.8"
   }
 

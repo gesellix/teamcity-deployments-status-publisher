@@ -1,0 +1,34 @@
+{
+  "sha": "aa3331f82f4990c24ba02f6be8a142405801013f",
+  "node_id": "MDY6Q29tbWl0MzEwNjk4Mjk1OmFhMzMzMWY4MmY0OTkwYzI0YmEwMmY2YmU4YTE0MjQwNTgwMTAxM2Y=",
+  "url": "https://api.github.com/repos/gesellix/deployment-tests/git/commits/aa3331f82f4990c24ba02f6be8a142405801013f",
+  "html_url": "https://github.com/gesellix/deployment-tests/commit/aa3331f82f4990c24ba02f6be8a142405801013f",
+  "author": {
+    "name": "Tobias Gesellchen",
+    "email": "tobias.gesellchen@hypoport.de",
+    "date": "2020-11-08T17:51:08Z"
+  },
+  "committer": {
+    "name": "GitHub",
+    "email": "noreply@github.com",
+    "date": "2020-11-08T17:51:08Z"
+  },
+  "tree": {
+    "sha": "86cc1b0e6d493c896bf607ea776f0c2a45acd553",
+    "url": "https://api.github.com/repos/gesellix/deployment-tests/git/trees/86cc1b0e6d493c896bf607ea776f0c2a45acd553"
+  },
+  "message": "Update README.md",
+  "parents": [
+    {
+      "sha": "9bd5374e375e3416ff981122703a0e4079055fea",
+      "url": "https://api.github.com/repos/gesellix/deployment-tests/git/commits/9bd5374e375e3416ff981122703a0e4079055fea",
+      "html_url": "https://github.com/gesellix/deployment-tests/commit/9bd5374e375e3416ff981122703a0e4079055fea"
+    }
+  ],
+  "verification": {
+    "verified": true,
+    "reason": "valid",
+    "signature": "-----BEGIN PGP SIGNATURE-----\n\nwsBcBAABCAAQBQJfqDAMCRBK7hj4Ov3rIwAAdHIIAGosA/ENuk85P2tZVdH0D/0m\nn60RYJKHJL9ylu3R8Kcmao3nBdYGnD0gecpeeao0AlLj1Jk3JAJa5y5iAwRehzLQ\ndlnSKD9t2fNwAJ2nNWSndpMsXNEFnjZ50HuvJde9l5Y6Gt2HuqKfpel6dwefxIdo\n4f/TLWRJcAQ3c/K/Oee/Jop9QDptf7RdBenOfEuqytqdnI5wbnGv9xh1+fqs4NDh\nZYl+gb8Nw+Uv8wn/Ko2lijR2oXXdZs8LSg6DTZpVEYiRo+96OSjUerOdnajgfrcU\nPQpmlISuXtfpfu3xGR3ZOxshkq9q89DyiO4cKT8LPclGWsqyZFzgnKasu1wnrHw=\n=zQ+t\n-----END PGP SIGNATURE-----\n",
+    "payload": "tree 86cc1b0e6d493c896bf607ea776f0c2a45acd553\nparent 9bd5374e375e3416ff981122703a0e4079055fea\nauthor Tobias Gesellchen <tobias.gesellchen@hypoport.de> 1604857868 +0100\ncommitter GitHub <noreply@github.com> 1604857868 +0100\n\nUpdate README.md"
+  }
+}
