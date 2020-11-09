@@ -11,9 +11,8 @@ import jetbrains.buildServer.serverSide.BasePropertiesModel;
 import jetbrains.buildServer.serverSide.BuildRevision;
 import jetbrains.buildServer.serverSide.TeamCityProperties;
 import jetbrains.buildServer.vcs.VcsRootInstance;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
-import org.apache.http.entity.StringEntity;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.RecordedRequest;
 import org.jetbrains.annotations.NotNull;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -57,7 +56,7 @@ public class GitHubPublisherTest extends HttpPublisherTest {
   public void test_buildFinishedSuccessfully_server_url_with_subdir() throws Exception {
     Map<String, String> params = getPublisherParams();
     setExpectedApiPath("/subdir/api/v3");
-    params.put(GITHUB_SERVER, getServerUrl() + "/subdir/api/v3/");
+    params.put(GITHUB_SERVER, getServerUrl("/subdir/api/v3/"));
     myVcsRoot.setProperties(Collections.singletonMap("url", "https://url.com/subdir/owner/project"));
     VcsRootInstance vcsRootInstance = myBuildType.getVcsRootInstanceForParent(myVcsRoot);
     myRevision = new BuildRevision(vcsRootInstance, REVISION, "", REVISION);
@@ -68,7 +67,7 @@ public class GitHubPublisherTest extends HttpPublisherTest {
   public void test_buildFinishedSuccessfully_server_url_with_slash() throws Exception {
     Map<String, String> params = getPublisherParams();
     setExpectedApiPath("/subdir/api/v3");
-    params.put(GITHUB_SERVER, getServerUrl() + "/subdir/api/v3/");
+    params.put(GITHUB_SERVER, getServerUrl("/subdir/api/v3/") );
     myVcsRoot.setProperties(Collections.singletonMap("url", "https://url.com/subdir/owner/project"));
     VcsRootInstance vcsRootInstance = myBuildType.getVcsRootInstanceForParent(myVcsRoot);
     myRevision = new BuildRevision(vcsRootInstance, REVISION, "", REVISION);
@@ -76,7 +75,7 @@ public class GitHubPublisherTest extends HttpPublisherTest {
     test_buildFinished_Successfully();
   }
 
-  public void should_fail_with_error_on_wrong_vcs_url() throws InterruptedException {
+  public void should_fail_with_error_on_wrong_vcs_url() {
     myVcsRoot.setProperties(Collections.singletonMap("url", "wrong://url.com"));
     VcsRootInstance vcsRootInstance = myBuildType.getVcsRootInstanceForParent(myVcsRoot);
     BuildRevision revision = new BuildRevision(vcsRootInstance, REVISION, "", REVISION);
@@ -115,7 +114,7 @@ public class GitHubPublisherTest extends HttpPublisherTest {
   }
 
   @Override
-  protected boolean respondToGet(String url, HttpResponse httpResponse) {
+  protected boolean respondToGet(String url, MockResponse httpResponse) {
     if (url.contains("/repos" + "/" + OWNER + "/" + CORRECT_REPO)) {
       respondWithRepoInfo(httpResponse, CORRECT_REPO, true);
     }
@@ -130,23 +129,23 @@ public class GitHubPublisherTest extends HttpPublisherTest {
   }
 
   @Override
-  protected boolean respondToPost(String url, String requestData, final HttpRequest httpRequest, HttpResponse httpResponse) {
+  protected boolean respondToPost(String url, String requestData, final RecordedRequest httpRequest, MockResponse httpResponse) {
     return isUrlExpected(url, httpResponse);
   }
 
-  private void respondWithRepoInfo(HttpResponse httpResponse, String repoName, boolean isPushPermitted) {
+  private void respondWithRepoInfo(MockResponse httpResponse, String repoName, boolean isPushPermitted) {
     Repository repoInfo = new de.gesellix.github.client.data.Repository(-1, repoName, new de.gesellix.github.client.data.Permissions());
     repoInfo.getPermissions().setPull(true);
     repoInfo.getPermissions().setPush(isPushPermitted);
     String jsonResponse = moshi.adapter(Repository.class).toJson(repoInfo);
-    httpResponse.setEntity(new StringEntity(jsonResponse, "UTF-8"));
+    httpResponse.setBody(jsonResponse);
   }
 
   @Override
   protected Map<String, String> getPublisherParams() {
     return new HashMap<String, String>() {{
       put(GITHUB_TOKEN, "token");
-      put(GITHUB_SERVER, getServerUrl());
+      put(GITHUB_SERVER, getServerUrl("/"));
     }};
   }
 }

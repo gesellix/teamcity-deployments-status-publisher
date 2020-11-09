@@ -23,13 +23,12 @@ dependencies {
 //  implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.9.2")
 //  implementation("com.github.salomonbrys.kotson:kotson:2.5.0")
 
-  implementation("org.apache.httpcomponents:httpclient:4.5.1")
-//  implementation("org.apache.httpcomponents:httpcore:4.4.3")
-  implementation("commons-beanutils:commons-beanutils-core:1.8.3")
+  testImplementation("com.squareup.okhttp3:mockwebserver:4.9.0")
+//  implementation("commons-beanutils:commons-beanutils-core:1.8.3")
 //  implementation("commons-codec:commons-codec:1.9")
 //  implementation("commons-logging:commons-logging:1.2")
   implementation("com.squareup.moshi:moshi:1.8.0")
-  implementation("com.jcraft:jsch:0.1.50")
+//  implementation("com.jcraft:jsch:0.1.50")
 
   provided("org.jetbrains.teamcity:server-api:${teamcityVersion}")
   provided("org.jetbrains.teamcity:oauth:${teamcityVersion}")

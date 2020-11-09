@@ -3,20 +3,17 @@ package de.gesellix.teamcity.deployments.server;
 import com.intellij.openapi.util.io.StreamUtil;
 import jetbrains.buildServer.messages.Status;
 import jetbrains.buildServer.version.ServerVersionHolder;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpEntityEnclosingRequest;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
-import org.apache.http.RequestLine;
-import org.apache.http.config.SocketConfig;
-import org.apache.http.impl.bootstrap.HttpServer;
-import org.apache.http.impl.bootstrap.ServerBootstrap;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.QueueDispatcher;
+import okhttp3.mockwebserver.RecordedRequest;
+import org.jetbrains.annotations.NotNull;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.io.InputStream;
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.BDDAssertions.then;
@@ -31,12 +28,11 @@ public abstract class HttpPublisherTest extends AsyncPublisherTest {
   protected String CORRECT_REPO = "project";
   protected String READ_ONLY_REPO = "readonly";
 
-  private HttpServer myHttpServer;
+  private MockWebServer mockWebServer;
   private int myNumberOfCurrentRequests = 0;
   private String myLastRequest;
   private String myExpectedApiPath = "";
   private String myExpectedEndpointPrefix = "";
-  private int myRespondWithRedirectCode = 0;
   private String myLastAgent;
 
   @Override
@@ -44,8 +40,8 @@ public abstract class HttpPublisherTest extends AsyncPublisherTest {
     return myLastRequest;
   }
 
-  protected String getServerUrl() {
-    return "http://localhost:" + myHttpServer.getLocalPort();
+  protected String getServerUrl(String path) {
+    return mockWebServer.url(path.isEmpty() ? "/" : path).toString();
   }
 
   @Override
@@ -56,69 +52,65 @@ public abstract class HttpPublisherTest extends AsyncPublisherTest {
   @BeforeMethod
   @Override
   protected void setUp() throws Exception {
-
     myLastRequest = null;
     myLastAgent = null;
 
-    final SocketConfig socketConfig = SocketConfig.custom().setSoTimeout(TIMEOUT * 2).build();
-    ServerBootstrap bootstrap = ServerBootstrap.bootstrap().setSocketConfig(socketConfig).setServerInfo("TEST/1.1")
-      .registerHandler("/*", (httpRequest, httpResponse, httpContext) -> {
-        myLastAgent = httpRequest.getLastHeader("User-Agent").getValue();
-        if (myRespondWithRedirectCode > 0) {
-          setRedirectionResponse(httpRequest, httpResponse);
-          return;
-        }
+    mockWebServer = new MockWebServer();
+    mockWebServer.setDispatcher(new QueueDispatcher() {
+      @NotNull
+      @Override
+      public MockResponse dispatch(@NotNull RecordedRequest recordedRequest) {
+        myLastAgent = recordedRequest.getHeader("User-Agent");
 
         myNumberOfCurrentRequests++;
         myProcessingStarted.release(); // indicates that we are processing request
+
         try {
           if (null != myServerMutex && !myServerMutex.tryAcquire(TIMEOUT * 2, TimeUnit.MILLISECONDS)) {
             myNumberOfCurrentRequests--;
-            return;
+            return new MockResponse();
           }
         }
         catch (InterruptedException ex) {
-          httpResponse.setStatusCode(500);
           myNumberOfCurrentRequests--;
-          return;
+          return new MockResponse().setResponseCode(500);
         }
-        myLastRequest = httpRequest.getRequestLine().toString();
-        String requestData = null;
 
-        if (httpRequest instanceof HttpEntityEnclosingRequest) {
-          HttpEntity entity = ((HttpEntityEnclosingRequest) httpRequest).getEntity();
-          InputStream is = entity.getContent();
-          requestData = StreamUtil.readText(is);
-          myLastRequest += "\tENTITY: " + requestData;
-          httpResponse.setStatusCode(201);
+        myLastRequest = recordedRequest.getRequestLine();
+
+//        MockResponse response = super.dispatch(recordedRequest);
+        MockResponse response = new MockResponse().setResponseCode(200);
+        String requestData = null;
+        if (recordedRequest.getBodySize() != 0) {
+          try {
+            requestData = StreamUtil.readText(recordedRequest.getBody().inputStream());
+            myLastRequest += "\tENTITY: " + requestData;
+            response.setResponseCode(201);
+          }
+          catch (IOException e) {
+            //TODO?
+          }
         }
-        else {
-          httpResponse.setStatusCode(200);
-        }
-        if (!populateResponse(httpRequest, requestData, httpResponse)) {
-          myLastRequest = "HTTP error: " + httpResponse.getStatusLine();
+        if (!populateResponse(recordedRequest, requestData, response)) {
+          myLastRequest = "HTTP error: " + response.getStatus();
         }
 
         myNumberOfCurrentRequests--;
         myProcessingFinished.release();
-      });
+        return response;
+      }
+    });
+    mockWebServer.start();
 
-    myHttpServer = bootstrap.create();
-    myHttpServer.start();
-    myVcsURL = getServerUrl() + "/" + OWNER + "/" + CORRECT_REPO;
-    myReadOnlyVcsURL = getServerUrl() + "/" + OWNER + "/" + READ_ONLY_REPO;
+    myVcsURL = getServerUrl("/" + OWNER + "/" + CORRECT_REPO);
+    myReadOnlyVcsURL = getServerUrl("/" + OWNER + "/" + READ_ONLY_REPO);
     super.setUp();
-  }
-
-  protected void setRedirectionResponse(final HttpRequest httpRequest, final HttpResponse httpResponse) {
-    httpResponse.setStatusCode(307);
-    httpResponse.setHeader("Location", httpRequest.getRequestLine().getUri());
-    myRespondWithRedirectCode = 0;
   }
 
   @Test(dataProvider = "provideRedirectCodes")
   public void test_redirection(int httpCode) throws Exception {
-    myRespondWithRedirectCode = httpCode;
+    mockWebServer.enqueue(new MockResponse().setResponseCode(httpCode).addHeader("Location", "redirect-uri"));
+    mockWebServer.enqueue(new MockResponse().setResponseCode(200));
     myPublisher.buildFinished(createBuildInCurrentBranch(myBuildType, Status.NORMAL), myRevision);
     then(waitForRequest()).isNotNull().doesNotMatch(".*error.*")
       .matches(myExpectedRegExps.get(EventToTest.FINISHED));
@@ -136,10 +128,9 @@ public abstract class HttpPublisherTest extends AsyncPublisherTest {
     then(myLastAgent).isEqualTo("TeamCity Server " + ServerVersionHolder.getVersion().getDisplayVersion());
   }
 
-  protected boolean populateResponse(HttpRequest httpRequest, String requestData, HttpResponse httpResponse) {
-    RequestLine requestLine = httpRequest.getRequestLine();
-    String method = requestLine.getMethod();
-    String url = requestLine.getUri();
+  protected boolean populateResponse(RecordedRequest httpRequest, String requestData, MockResponse httpResponse) {
+    String method = httpRequest.getMethod();
+    String url = httpRequest.getPath();
     if (method.equals("GET")) {
       return respondToGet(url, httpResponse);
     }
@@ -151,11 +142,11 @@ public abstract class HttpPublisherTest extends AsyncPublisherTest {
     return false;
   }
 
-  protected abstract boolean respondToGet(String url, HttpResponse httpResponse);
+  protected abstract boolean respondToGet(String url, MockResponse httpResponse);
 
-  protected abstract boolean respondToPost(String url, String requestData, final HttpRequest httpRequest, HttpResponse httpResponse);
+  protected abstract boolean respondToPost(String url, String requestData, final RecordedRequest httpRequest, MockResponse httpResponse);
 
-  protected boolean isUrlExpected(String url, HttpResponse httpResponse) {
+  protected boolean isUrlExpected(String url, MockResponse httpResponse) {
     String expected = getExpectedApiPath() + getExpectedEndpointPrefix();
     if (!url.startsWith(expected)) {
       respondWithError(httpResponse, 404, String.format("Unexpected URL: '%s' expected: '%s'", url, expected));
@@ -164,16 +155,16 @@ public abstract class HttpPublisherTest extends AsyncPublisherTest {
     return true;
   }
 
-  protected void respondWithError(HttpResponse httpResponse, int statusCode, String msg) {
-    httpResponse.setStatusCode(statusCode);
-    httpResponse.setReasonPhrase(msg);
+  protected void respondWithError(MockResponse httpResponse, int statusCode, String msg) {
+    httpResponse.setResponseCode(statusCode);
+//    httpResponse.setReasonPhrase(msg);
   }
 
   @AfterMethod
   @Override
   protected void tearDown() throws Exception {
     super.tearDown();
-    myHttpServer.stop();
+    mockWebServer.shutdown();
   }
 
   protected void setExpectedApiPath(String path) {
