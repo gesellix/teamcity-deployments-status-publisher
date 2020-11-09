@@ -60,7 +60,7 @@ public abstract class AsyncPublisherTest extends DeploymentsStatusPublisherTest 
     then(waitForRequest()).isNull();
     Collection<SystemProblemEntry> problems = myProblemNotificationEngine.getProblems(myBuildType);
     then(problems.size()).isEqualTo(1);
-    then(problems.iterator().next().getProblem().getDescription()).matches(String.format("Deployments Status Publisher.*%s.*timeout.*", myPublisher.getId()));
+    then(problems.iterator().next().getProblem().getDescription()).matches(String.format("Deployments Status Publisher.*%s.*timed?\\s?out.*", myPublisher.getId()));
     myServerMutex.release();
   }
 
