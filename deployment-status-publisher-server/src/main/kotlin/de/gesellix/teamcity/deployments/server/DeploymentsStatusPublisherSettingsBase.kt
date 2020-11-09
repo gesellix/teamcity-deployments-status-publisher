@@ -8,7 +8,7 @@ import jetbrains.buildServer.users.SUser
 import jetbrains.buildServer.vcs.VcsRoot
 import jetbrains.buildServer.web.openapi.PluginDescriptor
 
-abstract class BasePublisherSettings(
+abstract class DeploymentsStatusPublisherSettingsBase(
   protected val executorServices: ExecutorServices,
   protected val descriptor: PluginDescriptor,
   protected val problems: DeploymentsStatusPublisherProblems
