@@ -1,13 +1,11 @@
 package de.gesellix.teamcity.deployments.server.github;
 
-import com.google.gson.Gson;
+import com.squareup.moshi.Moshi;
+import de.gesellix.github.client.data.Repository;
 import de.gesellix.teamcity.deployments.server.HttpPublisherTest;
 import de.gesellix.teamcity.deployments.server.MockPluginDescriptor;
 import de.gesellix.teamcity.deployments.server.PublisherException;
 import de.gesellix.teamcity.deployments.server.github.api.impl.GitHubApiFactoryImpl;
-import de.gesellix.teamcity.deployments.server.github.api.impl.HttpClientWrapperImpl;
-import de.gesellix.teamcity.deployments.server.github.api.impl.data.Permissions;
-import de.gesellix.teamcity.deployments.server.github.api.impl.data.RepoInfo;
 import jetbrains.buildServer.messages.Status;
 import jetbrains.buildServer.serverSide.BasePropertiesModel;
 import jetbrains.buildServer.serverSide.BuildRevision;
@@ -24,9 +22,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static de.gesellix.teamcity.deployments.server.ConstantsKt.GITHUB_PASSWORD;
 import static de.gesellix.teamcity.deployments.server.ConstantsKt.GITHUB_SERVER;
-import static de.gesellix.teamcity.deployments.server.ConstantsKt.GITHUB_USERNAME;
+import static de.gesellix.teamcity.deployments.server.ConstantsKt.GITHUB_TOKEN;
 import static org.assertj.core.api.BDDAssertions.then;
 
 /**
@@ -36,6 +33,8 @@ import static org.assertj.core.api.BDDAssertions.then;
 public class GitHubPublisherTest extends HttpPublisherTest {
 
   private ChangeStatusUpdater myChangeStatusUpdater;
+
+  Moshi moshi = new Moshi.Builder().build();
 
   public GitHubPublisherTest() {
     myExpectedRegExps.put(EventToTest.QUEUED, null); // not to be tested
@@ -51,14 +50,14 @@ public class GitHubPublisherTest extends HttpPublisherTest {
     myExpectedRegExps.put(EventToTest.FAILURE_DETECTED, null); // not to be tested
     myExpectedRegExps.put(EventToTest.MARKED_SUCCESSFUL, String.format(".*/repos/owner/project/statuses/%s.*ENTITY:.*build finished.*success.*", REVISION)); // not to be tested
     myExpectedRegExps.put(EventToTest.MARKED_RUNNING_SUCCESSFUL, String.format(".*/repos/owner/project/statuses/%s.*ENTITY:.*build started.*pending.*", REVISION)); // not to be tested
-    myExpectedRegExps.put(EventToTest.PAYLOAD_ESCAPED, String.format(".*/repos/owner/project/statuses/%s.*ENTITY:.*build failed.*failure.*%s.*", REVISION, BT_NAME_ESCAPED_REGEXP));
+    myExpectedRegExps.put(EventToTest.PAYLOAD_ESCAPED, String.format(".*/repos/owner/project/statuses/%s.*ENTITY:.*%s.*build failed.*failure.*", REVISION, BT_NAME_ESCAPED_REGEXP));
     myExpectedRegExps.put(EventToTest.TEST_CONNECTION, String.format(".*/repos/owner/project .*")); // not to be tested
   }
 
   public void test_buildFinishedSuccessfully_server_url_with_subdir() throws Exception {
     Map<String, String> params = getPublisherParams();
     setExpectedApiPath("/subdir/api/v3");
-    params.put(GITHUB_SERVER, getServerUrl() + "/subdir/api/v3");
+    params.put(GITHUB_SERVER, getServerUrl() + "/subdir/api/v3/");
     myVcsRoot.setProperties(Collections.singletonMap("url", "https://url.com/subdir/owner/project"));
     VcsRootInstance vcsRootInstance = myBuildType.getVcsRootInstanceForParent(myVcsRoot);
     myRevision = new BuildRevision(vcsRootInstance, REVISION, "", REVISION);
@@ -108,10 +107,9 @@ public class GitHubPublisherTest extends HttpPublisherTest {
 
     Map<String, String> params = getPublisherParams();
 
-    myChangeStatusUpdater = new ChangeStatusUpdater(myExecServices,
-                                                    new GitHubApiFactoryImpl(new HttpClientWrapperImpl()), myWebLinks);
+    myChangeStatusUpdater = new ChangeStatusUpdater(myExecServices, new GitHubApiFactoryImpl(), myWebLinks);
 
-    myPublisherSettings = new GitHubSettings(myChangeStatusUpdater, myExecServices, new MockPluginDescriptor(), myWebLinks, myProblems,
+    myPublisherSettings = new GitHubSettings(myChangeStatusUpdater, myExecServices, new MockPluginDescriptor(), myProblems,
                                              myOAuthConnectionsManager, myOAuthTokenStorage, myFixture.getSecurityContext());
     myPublisher = new GitHubPublisher(myPublisherSettings, myBuildType, FEATURE_ID, myChangeStatusUpdater, params, myProblems);
   }
@@ -137,21 +135,17 @@ public class GitHubPublisherTest extends HttpPublisherTest {
   }
 
   private void respondWithRepoInfo(HttpResponse httpResponse, String repoName, boolean isPushPermitted) {
-    Gson gson = new Gson();
-    RepoInfo repoInfo = new RepoInfo();
-    repoInfo.setName(repoName);
-    repoInfo.setPermissions(new Permissions());
+    Repository repoInfo = new de.gesellix.github.client.data.Repository(-1, repoName, new de.gesellix.github.client.data.Permissions());
     repoInfo.getPermissions().setPull(true);
     repoInfo.getPermissions().setPush(isPushPermitted);
-    String jsonResponse = gson.toJson(repoInfo);
+    String jsonResponse = moshi.adapter(Repository.class).toJson(repoInfo);
     httpResponse.setEntity(new StringEntity(jsonResponse, "UTF-8"));
   }
 
   @Override
   protected Map<String, String> getPublisherParams() {
     return new HashMap<String, String>() {{
-      put(GITHUB_USERNAME, "user");
-      put(GITHUB_PASSWORD, "pwd");
+      put(GITHUB_TOKEN, "token");
       put(GITHUB_SERVER, getServerUrl());
     }};
   }

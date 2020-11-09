@@ -2,7 +2,6 @@ package de.gesellix.teamcity.deployments.server
 
 import jetbrains.buildServer.serverSide.BuildTypeIdentity
 import jetbrains.buildServer.serverSide.SProject
-import jetbrains.buildServer.serverSide.WebLinks
 import jetbrains.buildServer.serverSide.executors.ExecutorServices
 import jetbrains.buildServer.serverSide.oauth.OAuthConnectionDescriptor
 import jetbrains.buildServer.users.SUser
@@ -12,7 +11,6 @@ import jetbrains.buildServer.web.openapi.PluginDescriptor
 abstract class BasePublisherSettings(
   protected val executorServices: ExecutorServices,
   protected val descriptor: PluginDescriptor,
-  protected val links: WebLinks,
   protected val problems: DeploymentsStatusPublisherProblems
 ) : DeploymentsStatusPublisherSettings {
 

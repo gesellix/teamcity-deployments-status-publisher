@@ -65,23 +65,6 @@
             <strong><em>repo:status</em></strong> and
             <strong><em>public_repo</em></strong> or <strong><em>repo</em></strong> depending on the repository type
           </span>
-      </td>
-    </tr>
-  </props:selectSectionPropertyContent>
-
-  <props:selectSectionPropertyContent value="${keys.authenticationTypePasswordValue}" caption="Password">
-    <tr>
-      <th><label for="${keys.userNameKey}">GitHub Username: <l:star/></label></th>
-      <td>
-        <props:textProperty name="${keys.userNameKey}" className="mediumField"/>
-        <span class="error" id="error_${keys.userNameKey}"></span>
-      </td>
-    </tr>
-    <tr>
-      <th><label for="${keys.passwordKey}">GitHub Password: <l:star/></label></th>
-      <td>
-        <props:passwordProperty name="${keys.passwordKey}" className="mediumField"/>
-        <span class="error" id="error_${keys.passwordKey}"></span>
 
         <c:if test="${testConnectionSupported}">
           <script>
@@ -151,7 +134,6 @@
             text-decoration: none;
           }
         </style>
-
       </td>
     </tr>
   </props:selectSectionPropertyContent>

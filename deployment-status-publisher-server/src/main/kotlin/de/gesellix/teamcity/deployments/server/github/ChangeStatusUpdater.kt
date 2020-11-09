@@ -16,14 +16,12 @@
 package de.gesellix.teamcity.deployments.server.github
 
 import com.intellij.openapi.diagnostic.Logger
+import de.gesellix.github.client.Timeout
 import de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisherProblems
 import de.gesellix.teamcity.deployments.server.GITHUB_AUTH_TYPE
 import de.gesellix.teamcity.deployments.server.GITHUB_CONTEXT
-import de.gesellix.teamcity.deployments.server.GITHUB_PASSWORD
-import de.gesellix.teamcity.deployments.server.GITHUB_PASSWORD_DEPRECATED
 import de.gesellix.teamcity.deployments.server.GITHUB_SERVER
 import de.gesellix.teamcity.deployments.server.GITHUB_TOKEN
-import de.gesellix.teamcity.deployments.server.GITHUB_USERNAME
 import de.gesellix.teamcity.deployments.server.GitRepositoryParser
 import de.gesellix.teamcity.deployments.server.PublisherException
 import de.gesellix.teamcity.deployments.server.Repository
@@ -32,10 +30,8 @@ import de.gesellix.teamcity.deployments.server.github.api.GitHubApiAuthenticatio
 import de.gesellix.teamcity.deployments.server.github.api.GitHubApiFactory
 import de.gesellix.teamcity.deployments.server.github.api.GitHubChangeState
 import jetbrains.buildServer.messages.Status
-import jetbrains.buildServer.serverSide.BuildStatisticsOptions
 import jetbrains.buildServer.serverSide.RepositoryVersion
 import jetbrains.buildServer.serverSide.SBuild
-import jetbrains.buildServer.serverSide.TestFailureInfo
 import jetbrains.buildServer.serverSide.WebLinks
 import jetbrains.buildServer.serverSide.executors.ExecutorServices
 import jetbrains.buildServer.serverSide.impl.LogUtil
@@ -44,6 +40,7 @@ import jetbrains.buildServer.util.StringUtil
 import jetbrains.buildServer.vcs.VcsRoot
 import java.io.IOException
 import java.util.concurrent.ExecutorService
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.Lock
 
 /**
@@ -58,21 +55,13 @@ class ChangeStatusUpdater(
 
   private val executor: ExecutorService = services.lowPriorityExecutorService
 
-  private fun getGitHubApi(params: Map<String, String>): GitHubApi {
+  private fun getGitHubApi(params: Map<String, String>, timeout: Timeout = Timeout(10, TimeUnit.SECONDS)): GitHubApi {
     val serverUrl = params[GITHUB_SERVER]
     require(!(serverUrl == null || StringUtil.isEmptyOrSpaces(serverUrl))) { "Failed to read GitHub URL from the feature settings" }
     return when (val authenticationType = GitHubApiAuthenticationType.parse(params[GITHUB_AUTH_TYPE])) {
-      GitHubApiAuthenticationType.PASSWORD_AUTH -> {
-        val username = params[GITHUB_USERNAME]
-        var password = params[GITHUB_PASSWORD]
-        if (password == null) {
-          password = params[GITHUB_PASSWORD_DEPRECATED]
-        }
-        factory.openGitHubForUser(serverUrl, username!!, password!!)
-      }
       GitHubApiAuthenticationType.TOKEN_AUTH -> {
         val token = params[GITHUB_TOKEN]
-        factory.openGitHubForToken(serverUrl, token!!)
+        factory.openGitHubForToken(serverUrl, token!!, timeout)
       }
       else -> throw IllegalArgumentException("Failed to parse authentication type:$authenticationType")
     }
@@ -104,13 +93,12 @@ class ChangeStatusUpdater(
     params: Map<String, String>,
     publisher: GitHubPublisher
   ): Handler {
-    val api = getGitHubApi(params)
+    val api = getGitHubApi(params, Timeout(publisher.getConnectionTimeout().toLong(), TimeUnit.MILLISECONDS))
     val repo: Repository = parseRepository(root)
     val repositoryOwner: String = repo.owner()
     val repositoryName: String = repo.repositoryName()
     val ctx = params[GITHUB_CONTEXT]
     val context = if (StringUtil.isEmpty(ctx)) "continuous-integration/teamcity" else ctx!!
-    val addComments = false
     val shouldReportOnStart = true
     val shouldReportOnFinish = true
     return object : Handler {
@@ -138,9 +126,6 @@ class ChangeStatusUpdater(
         scheduleChangeUpdate(hash, build, text, status)
       }
 
-      val publisher: GitHubPublisher
-        get() = publisher
-
       private fun getGitHubChangeText(build: SBuild): String {
         return if (build.buildStatus.isSuccessful) {
           "TeamCity build finished"
@@ -151,13 +136,16 @@ class ChangeStatusUpdater(
 
       private fun getGitHubChangeState(build: SBuild): GitHubChangeState {
         val status = build.statusDescriptor.status
-        val priority = status.priority
-        return if (priority == Status.NORMAL.priority) {
-          GitHubChangeState.Success
-        } else if (priority == Status.FAILURE.priority) {
-          GitHubChangeState.Failure
-        } else {
-          GitHubChangeState.Error
+        return when (status.priority) {
+          Status.NORMAL.priority -> {
+            GitHubChangeState.Success
+          }
+          Status.FAILURE.priority -> {
+            GitHubChangeState.Failure
+          }
+          else -> {
+            GitHubChangeState.Error
+          }
         }
       }
 
@@ -175,74 +163,6 @@ class ChangeStatusUpdater(
             "status: " + status
         )
         executor.submit(ExceptionUtil.catchAll("set change status on github", object : Runnable {
-          private fun getFailureText(failureInfo: TestFailureInfo?): String {
-            val noData = "<no details available>"
-            if (failureInfo == null) return noData
-            val stacktrace = failureInfo.shortStacktrace
-            return if (stacktrace == null || StringUtil.isEmptyOrSpaces(stacktrace)) noData else stacktrace
-          }
-
-          private fun getFriendlyDuration(seconds: Long): String {
-            val second = seconds % 60
-            val minute = seconds / 60 % 60
-            val hour = seconds / 60 / 60
-            return String.format("%02d:%02d:%02d", hour, minute, second)
-          }
-
-          private fun getComment(
-            version: RepositoryVersion,
-            build: SBuild,
-            completed: Boolean,
-            hash: String
-          ): String {
-            val comment = StringBuilder()
-            comment.append("TeamCity ")
-            val bt = build.buildType
-            if (bt != null) {
-              comment.append(bt.fullName)
-            }
-            comment.append(" [Build ")
-            comment.append(build.buildNumber)
-            comment.append("](")
-            comment.append(getViewResultsUrl(build))
-            comment.append(") ")
-            if (completed) {
-              comment.append("outcome was **").append(build.statusDescriptor.status.text).append("**")
-            } else {
-              comment.append("is now running")
-            }
-            comment.append("\n")
-            val text = build.statusDescriptor.text
-            if (completed && text != null) {
-              comment.append("Summary: ")
-              comment.append(text)
-              comment.append(" Build time: ")
-              comment.append(getFriendlyDuration(build.duration))
-              if (build.buildStatus != Status.NORMAL) {
-                val stats = build.getBuildStatistics(BuildStatisticsOptions.ALL_TESTS_NO_DETAILS)
-                val failedTests = stats.failedTests
-                if (!failedTests.isEmpty()) {
-                  comment.append("\n### Failed tests\n")
-                  comment.append("```\n")
-                  for (i in failedTests.indices) {
-                    val testRun = failedTests[i]
-                    comment.append("")
-                    comment.append(testRun.test.name.toString())
-                    comment.append("\n")
-                    if (i == 10) {
-                      comment.append("\n##### there are ")
-                        .append(stats.failedTestCount - i)
-                        .append(" more failed tests, see build details\n")
-                      break
-                    }
-                  }
-                  comment.append("```\n")
-                }
-              }
-            }
-            return comment.toString()
-          }
-
           private fun resolveCommitHash(): String {
             val vcsBranch = version.vcsBranch
             if (vcsBranch != null && api.isPullRequestMergeBranch(vcsBranch)) {
@@ -286,19 +206,6 @@ class ChangeStatusUpdater(
                 LOG.info("Updated GitHub status for hash: " + hash + ", buildId: " + build.buildId + ", status: " + status)
               } catch (e: IOException) {
                 problems.reportProblem(String.format("Deployments Status Publisher error. GitHub status: '%s'", status.toString()), publisher, LogUtil.describe(build), publisher.serverUrl, e, LOG)
-              }
-              if (addComments) {
-                try {
-                  api.postComment(
-                    repositoryOwner,
-                    repositoryName,
-                    hash,
-                    getComment(version, build, status !== GitHubChangeState.Pending, hash)
-                  )
-                  LOG.info("Added comment to GitHub commit: " + hash + ", buildId: " + build.buildId + ", status: " + status)
-                } catch (e: IOException) {
-                  problems.reportProblem("Deployments Status Publisher has failed to add a comment", publisher, LogUtil.describe(build), null, e, LOG)
-                }
               }
             } finally {
               lock.unlock()

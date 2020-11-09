@@ -1,7 +1,7 @@
 package de.gesellix.teamcity.deployments.server.github
 
 import com.intellij.openapi.diagnostic.Logger
-import de.gesellix.teamcity.deployments.server.BaseCommitStatusPublisher
+import de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisherBase
 import de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisherProblems
 import de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisherSettings
 import de.gesellix.teamcity.deployments.server.GITHUB_CONTEXT
@@ -22,7 +22,7 @@ class GitHubPublisher(
   private val updater: ChangeStatusUpdater,
   params: Map<String, String>,
   problems: DeploymentsStatusPublisherProblems
-) : BaseCommitStatusPublisher(settings, buildType, buildFeatureId, params, problems) {
+) : DeploymentsStatusPublisherBase(settings, buildType, buildFeatureId, params, problems) {
 
   override fun toString(): String {
     return "github"

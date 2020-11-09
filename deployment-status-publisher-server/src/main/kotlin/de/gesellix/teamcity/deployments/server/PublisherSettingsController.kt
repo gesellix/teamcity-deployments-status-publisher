@@ -55,7 +55,7 @@ class PublisherSettingsController(
 
     val settingsUrl: String? = settings.getEditSettingsUrl()
     val params = if (settings.getDefaultParameters() != null) settings.getDefaultParameters() else emptyMap()
-    if (TEST_CONNECTION_YES.equals(request.getParameter(TEST_CONNECTION_PARAM))) {
+    if (TEST_CONNECTION_YES == request.getParameter(TEST_CONNECTION_PARAM)) {
       processTestConnectionRequest(request, response, settings, params)
       return null
     }

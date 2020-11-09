@@ -11,7 +11,7 @@ import jetbrains.buildServer.users.User
 import jetbrains.buildServer.vcs.VcsRoot
 import java.util.concurrent.locks.Lock
 
-abstract class BaseCommitStatusPublisher protected constructor(
+abstract class DeploymentsStatusPublisherBase protected constructor(
   private val settings: DeploymentsStatusPublisherSettings,
   private val buildType: SBuildType,
   private val buildFeatureId: String,

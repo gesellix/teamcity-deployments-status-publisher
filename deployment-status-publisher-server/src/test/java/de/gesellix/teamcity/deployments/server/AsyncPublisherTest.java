@@ -60,12 +60,10 @@ public abstract class AsyncPublisherTest extends DeploymentsStatusPublisherTest 
     then(waitForRequest()).isNull();
     Collection<SystemProblemEntry> problems = myProblemNotificationEngine.getProblems(myBuildType);
     then(problems.size()).isEqualTo(1);
-    then(problems.iterator().next().getProblem().getDescription()).matches(String.format("Deployments Status Publisher.*%s.*timed out.*", myPublisher.getId()));
+    then(problems.iterator().next().getProblem().getDescription()).matches(String.format("Deployments Status Publisher.*%s.*timeout.*", myPublisher.getId()));
     myServerMutex.release();
   }
 
-  // TODO enable and fix that test
-  @Test(enabled = false, description = "disabled due to flakyness or my inability to fix it")
   public void should_publish_in_sequence() throws Exception {
     myServerMutex = new Semaphore(1);
     myServerMutex.acquire();

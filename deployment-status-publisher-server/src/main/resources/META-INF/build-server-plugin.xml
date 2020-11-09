@@ -11,7 +11,6 @@
 
   <bean class="de.gesellix.teamcity.deployments.server.github.ChangeStatusUpdater"/>
   <bean class="de.gesellix.teamcity.deployments.server.github.api.impl.GitHubApiFactoryImpl"/>
-  <bean class="de.gesellix.teamcity.deployments.server.github.api.impl.HttpClientWrapperImpl" destroy-method="dispose"/>
   <bean class="de.gesellix.teamcity.deployments.server.github.GitHubSettings"/>
 
   <bean class="de.gesellix.teamcity.deployments.server.ServerListener">

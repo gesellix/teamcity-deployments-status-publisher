@@ -15,7 +15,7 @@ import java.util.Map;
 /**
  * @author anton.zamolotskikh, 13/09/16.
  */
-class MockPublisher extends BaseCommitStatusPublisher implements DeploymentsStatusPublisher {
+class MockPublisher extends DeploymentsStatusPublisherBase implements DeploymentsStatusPublisher {
 
   static final String PUBLISHER_ERROR = "Simulated publisher exception";
 

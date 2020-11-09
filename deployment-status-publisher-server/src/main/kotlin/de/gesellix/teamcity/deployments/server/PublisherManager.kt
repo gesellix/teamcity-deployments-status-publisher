@@ -1,17 +1,10 @@
 package de.gesellix.teamcity.deployments.server
 
-import jetbrains.buildServer.ExtensionsProvider
 import jetbrains.buildServer.serverSide.SBuildType
 
-class PublisherManager {
+class PublisherManager(publisherSettings: Collection<DeploymentsStatusPublisherSettings?>) {
 
-  private val publisherSettingsById: Map<String, DeploymentsStatusPublisherSettings>
-
-  constructor(extensionsProvider: ExtensionsProvider) : this(extensionsProvider.getExtensionsCollection(DeploymentsStatusPublisherSettings::class.java).extensions)
-
-  constructor(publisherSettings: Collection<DeploymentsStatusPublisherSettings?>) {
-    this.publisherSettingsById = publisherSettings.filterNotNull().associateBy { it.getId() }
-  }
+  private val publisherSettingsById: Map<String, DeploymentsStatusPublisherSettings> = publisherSettings.filterNotNull().associateBy { it.getId() }
 
   fun createPublisher(buildType: SBuildType, buildFeatureId: String, params: Map<String, String>): DeploymentsStatusPublisher? {
     val publisherId = params[PUBLISHER_ID_PARAM] ?: return null

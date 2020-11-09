@@ -15,43 +15,31 @@
  */
 package de.gesellix.teamcity.deployments.server.github.api.impl
 
+import de.gesellix.github.client.GitHubClient
+import de.gesellix.github.client.Timeout
 import de.gesellix.teamcity.deployments.server.github.api.GitHubApi
 import de.gesellix.teamcity.deployments.server.github.api.GitHubApiFactory
-import org.apache.http.HttpRequest
-import org.apache.http.auth.AuthenticationException
-import org.apache.http.auth.UsernamePasswordCredentials
-import org.apache.http.impl.auth.BasicScheme
-import org.apache.http.protocol.BasicHttpContext
+import jetbrains.buildServer.version.ServerVersionHolder
 
 /**
  * Created by Eugene Petrenko (eugene.petrenko@gmail.com)
  * Date: 06.09.12 2:54
  */
-class GitHubApiFactoryImpl(private val client: HttpClientWrapper) : GitHubApiFactory {
-
-  override fun openGitHubForUser(
-    url: String,
-    username: String,
-    password: String
-  ): GitHubApi {
-    return object : GitHubApiImpl(client, GitHubApiPaths(url)) {
-      @Throws(AuthenticationException::class)
-      override fun setAuthentication(request: HttpRequest) {
-        request.addHeader(BasicScheme().authenticate(UsernamePasswordCredentials(username, password), request, BasicHttpContext()))
-      }
-    }
-  }
+class GitHubApiFactoryImpl() : GitHubApiFactory {
 
   override fun openGitHubForToken(
     url: String,
-    token: String
+    token: String,
+    timeout: Timeout
   ): GitHubApi {
-    return object : GitHubApiImpl(client, GitHubApiPaths(url)) {
-      @Throws(AuthenticationException::class)
-      override fun setAuthentication(request: HttpRequest) {
-        //NOTE: This auth could also be done via HTTP header
-        request.addHeader(BasicScheme().authenticate(UsernamePasswordCredentials(token, "x-oauth-basic"), request, BasicHttpContext()))
-      }
+    return object : GitHubApiImpl(
+      GitHubClient(
+        baseUrl = url,
+        token = token,
+        userAgentString = "TeamCity Server ${ServerVersionHolder.getVersion().displayVersion}",
+        timeout = timeout
+      )
+    ) {
     }
   }
 }
