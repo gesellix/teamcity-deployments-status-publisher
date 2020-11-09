@@ -1,8 +1,8 @@
 package de.gesellix.teamcity.deployments.server.github
 
-import de.gesellix.teamcity.deployments.server.BasePublisherSettings
 import de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisher
 import de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisherProblems
+import de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisherSettingsBase
 import de.gesellix.teamcity.deployments.server.GITHUB_AUTH_TYPE
 import de.gesellix.teamcity.deployments.server.GITHUB_OAUTH_PROVIDER_ID
 import de.gesellix.teamcity.deployments.server.GITHUB_OAUTH_USER
@@ -45,7 +45,7 @@ class GitHubSettings(
   private val oauthTokensStorage: OAuthTokensStorage,
   private val securityContext: SecurityContext
 ) :
-  BasePublisherSettings(executorServices, descriptor, problems) {
+  DeploymentsStatusPublisherSettingsBase(executorServices, descriptor, problems) {
 
   private val supportedEvents: Set<DeploymentsStatusPublisher.Event> = object : HashSet<DeploymentsStatusPublisher.Event>() {
     init {
