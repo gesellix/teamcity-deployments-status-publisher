@@ -15,10 +15,11 @@ val teamcityVersion = rootProject.extra["teamcityVersion"] as String
 
 dependencies {
   implementation(project(":deployment-status-publisher-common"))
+  implementation(project(":github-client"))
 //  agent (project(path = ":agent", configuration = "plugin"))
 
   implementation(kotlin("stdlib-jdk8"))
-  implementation(kotlin("reflect"))
+//  implementation(kotlin("reflect"))
 //  implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.9.2")
 //  implementation("com.github.salomonbrys.kotson:kotson:2.5.0")
 
@@ -27,7 +28,7 @@ dependencies {
   implementation("commons-beanutils:commons-beanutils-core:1.8.3")
 //  implementation("commons-codec:commons-codec:1.9")
 //  implementation("commons-logging:commons-logging:1.2")
-  implementation("com.google.code.gson:gson:2.2.4")
+  implementation("com.squareup.moshi:moshi:1.8.0")
   implementation("com.jcraft:jsch:0.1.50")
 
   provided("org.jetbrains.teamcity:server-api:${teamcityVersion}")
@@ -53,11 +54,14 @@ dependencies {
   }
 }
 
-tasks {
-  withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "1.8"
-  }
 
+val compileKotlin: KotlinCompile by tasks
+compileKotlin.kotlinOptions {
+  jvmTarget = "1.8"
+  languageVersion = "1.4"
+}
+
+tasks {
   val testNg by creating(Test::class) {
     group = "verification"
     useTestNG() {
@@ -99,6 +103,7 @@ tasks {
         "db.jar",
         "ehcache-1.7.2.jar",
         "hsqldb.jar",
+        "hsqldb1.jar",
         "issue-tracker-impl.jar",
         "oauth.jar",
         "patches-impl.jar",

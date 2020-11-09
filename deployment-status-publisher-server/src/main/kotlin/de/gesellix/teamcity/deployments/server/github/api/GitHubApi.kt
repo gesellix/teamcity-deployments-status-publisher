@@ -28,13 +28,6 @@ interface GitHubApi {
   fun testConnection(repoOwner: String, repositoryName: String)
 
   @Throws(IOException::class)
-  fun readChangeStatus(
-    repoOwner: String,
-    repositoryName: String,
-    hash: String
-  ): String?
-
-  @Throws(IOException::class)
   fun setChangeStatus(
     repoOwner: String,
     repositoryName: String,

@@ -105,15 +105,15 @@ public abstract class DeploymentsStatusPublisherTest extends BaseServerTestCase 
       .matches(myExpectedRegExps.get(EventToTest.TEST_CONNECTION));
   }
 
-  public void test_testConnection_fails_on_readonly() throws InterruptedException {
+  public void test_testConnection_fails_on_readonly() {
     test_testConnection_failure(myReadOnlyVcsURL, getPublisherParams());
   }
 
-  public void test_testConnection_fails_on_bad_repo_url() throws InterruptedException {
+  public void test_testConnection_fails_on_bad_repo_url() {
     test_testConnection_failure("http://localhost/nothing", getPublisherParams());
   }
 
-  public void test_testConnection_fails_on_missing_target() throws InterruptedException {
+  public void test_testConnection_fails_on_missing_target() {
     test_testConnection_failure("http://localhost/nouser/norepo", getPublisherParams());
   }
 

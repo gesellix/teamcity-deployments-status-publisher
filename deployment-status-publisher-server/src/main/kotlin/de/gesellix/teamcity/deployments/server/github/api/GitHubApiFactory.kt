@@ -15,21 +15,19 @@
  */
 package de.gesellix.teamcity.deployments.server.github.api
 
+import de.gesellix.github.client.Timeout
+import java.util.concurrent.TimeUnit
+
 /**
  * Created by Eugene Petrenko (eugene.petrenko@gmail.com)
  * Date: 06.09.12 2:54
  */
 interface GitHubApiFactory {
 
-  fun openGitHubForUser(
-    url: String,
-    username: String,
-    password: String
-  ): GitHubApi
-
   fun openGitHubForToken(
     url: String,
-    token: String
+    token: String,
+    timeout: Timeout=Timeout(10, TimeUnit.SECONDS)
   ): GitHubApi
 
   companion object {

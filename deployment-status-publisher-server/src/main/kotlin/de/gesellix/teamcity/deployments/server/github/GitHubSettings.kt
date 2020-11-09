@@ -6,8 +6,6 @@ import de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisherProblem
 import de.gesellix.teamcity.deployments.server.GITHUB_AUTH_TYPE
 import de.gesellix.teamcity.deployments.server.GITHUB_OAUTH_PROVIDER_ID
 import de.gesellix.teamcity.deployments.server.GITHUB_OAUTH_USER
-import de.gesellix.teamcity.deployments.server.GITHUB_PASSWORD
-import de.gesellix.teamcity.deployments.server.GITHUB_PASSWORD_DEPRECATED
 import de.gesellix.teamcity.deployments.server.GITHUB_PUBLISHER_ID
 import de.gesellix.teamcity.deployments.server.GITHUB_SERVER
 import de.gesellix.teamcity.deployments.server.GITHUB_TOKEN
@@ -21,7 +19,6 @@ import jetbrains.buildServer.serverSide.InvalidProperty
 import jetbrains.buildServer.serverSide.PropertiesProcessor
 import jetbrains.buildServer.serverSide.SBuildType
 import jetbrains.buildServer.serverSide.SProject
-import jetbrains.buildServer.serverSide.WebLinks
 import jetbrains.buildServer.serverSide.auth.SecurityContext
 import jetbrains.buildServer.serverSide.executors.ExecutorServices
 import jetbrains.buildServer.serverSide.oauth.OAuthConnectionDescriptor
@@ -43,13 +40,12 @@ class GitHubSettings(
   private val changeStatusUpdater: ChangeStatusUpdater,
   executorServices: ExecutorServices,
   descriptor: PluginDescriptor,
-  links: WebLinks,
   problems: DeploymentsStatusPublisherProblems,
   private val oauthConnectionsManager: OAuthConnectionsManager,
   private val oauthTokensStorage: OAuthTokensStorage,
   private val securityContext: SecurityContext
 ) :
-  BasePublisherSettings(executorServices, descriptor, links, problems) {
+  BasePublisherSettings(executorServices, descriptor, problems) {
 
   private val supportedEvents: Set<DeploymentsStatusPublisher.Event> = object : HashSet<DeploymentsStatusPublisher.Event>() {
     init {
@@ -82,7 +78,7 @@ class GitHubSettings(
   override fun describeParameters(params: Map<String, String>): String {
     var result = super.describeParameters(params)
     val url = params[GITHUB_SERVER]
-    if (null != url && !url.equals(GitHubApiFactory.DEFAULT_URL)) {
+    if (null != url && url != GitHubApiFactory.DEFAULT_URL) {
       result += ": " + WebUtil.escapeXml(url)
     }
     return result
@@ -91,26 +87,18 @@ class GitHubSettings(
   override fun getOAuthConnections(project: SProject, user: SUser?): Map<OAuthConnectionDescriptor, Boolean> {
     val validConnections: MutableList<OAuthConnectionDescriptor> = ArrayList()
     val githubConnections: List<OAuthConnectionDescriptor> = oauthConnectionsManager.getAvailableConnectionsOfType(project, GitHubOAuthProvider.TYPE)
-    if (!githubConnections.isEmpty()) {
+    if (githubConnections.isNotEmpty()) {
       validConnections.add(githubConnections[0])
     }
     validConnections.addAll(oauthConnectionsManager.getAvailableConnectionsOfType(project, GHEOAuthProvider.TYPE))
     val connections: MutableMap<OAuthConnectionDescriptor, Boolean> = LinkedHashMap()
     for (c in validConnections) {
-      connections[c] = user != null && !oauthTokensStorage.getUserTokens(c.id, user).isEmpty()
+      connections[c] = user != null && oauthTokensStorage.getUserTokens(c.id, user).isNotEmpty()
     }
     return connections
   }
 
   override fun transformParameters(params: Map<String, String>): MutableMap<String, String>? {
-    val securePwd = params[GITHUB_PASSWORD]
-    val deprecatedPwd = params[GITHUB_PASSWORD_DEPRECATED]
-    if (securePwd == null && deprecatedPwd != null) {
-      val result: MutableMap<String, String> = HashMap(params)
-      result.remove(GITHUB_PASSWORD_DEPRECATED)
-      result[GITHUB_PASSWORD] = deprecatedPwd
-      return result
-    }
     return null
   }
 
@@ -155,10 +143,6 @@ class GitHubSettings(
         if (p == null) return result
 
         val authenticationType: GitHubApiAuthenticationType = GitHubApiAuthenticationType.parse(p[GITHUB_AUTH_TYPE])
-        if (authenticationType === GitHubApiAuthenticationType.PASSWORD_AUTH) {
-          checkNotEmpty(p, constants.getUserNameKey(), "Username must be specified", result)
-          checkNotEmpty(p, constants.getPasswordKey(), "Password must be specified", result)
-        }
         if (authenticationType === GitHubApiAuthenticationType.TOKEN_AUTH) {
           val oauthUsername = p[GITHUB_OAUTH_USER]
           val oauthProviderId = p[GITHUB_OAUTH_PROVIDER_ID]

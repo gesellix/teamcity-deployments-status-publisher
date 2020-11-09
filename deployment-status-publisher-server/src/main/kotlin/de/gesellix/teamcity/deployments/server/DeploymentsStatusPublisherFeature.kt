@@ -41,7 +41,7 @@ class DeploymentsStatusPublisherFeature(
     return PropertiesProcessor { params ->
       val errors: MutableList<InvalidProperty> = ArrayList()
       val publisherId = params[PUBLISHER_ID_PARAM]
-      if (StringUtil.isEmptyOrSpaces(publisherId) || DummyPublisherSettings.ID.equals(publisherId)) {
+      if (StringUtil.isEmptyOrSpaces(publisherId) || DummyPublisherSettings.ID == publisherId) {
         errors.add(InvalidProperty(PUBLISHER_ID_PARAM, "Choose a publisher"))
         return@PropertiesProcessor errors
       }

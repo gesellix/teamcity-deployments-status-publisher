@@ -1,6 +1,5 @@
 package de.gesellix.teamcity.deployments.server
 
-import com.intellij.openapi.diagnostic.Logger
 import jetbrains.buildServer.BuildProblemData
 import jetbrains.buildServer.messages.Status
 import jetbrains.buildServer.serverSide.Branch
@@ -31,6 +30,8 @@ class DeploymentsStatusPublisherListener(
   private val problems: DeploymentsStatusPublisherProblems
 ) : BuildServerAdapter() {
 
+  private val logger by logger(DeploymentsStatusPublisherListener::class.java.name)
+
   override fun changesLoaded(build: SRunningBuild) {
     val buildType = getBuildType(DeploymentsStatusPublisher.Event.STARTED, build) ?: return
     runForEveryPublisher(DeploymentsStatusPublisher.Event.STARTED, buildType, build, object : PublishTask {
@@ -45,7 +46,7 @@ class DeploymentsStatusPublisherListener(
     val buildType = getBuildType(DeploymentsStatusPublisher.Event.FINISHED, build) ?: return
     val finishedBuild = buildHistory.findEntry(build.buildId)
     if (finishedBuild == null) {
-      LOG.debug("Event: " + DeploymentsStatusPublisher.Event.FINISHED + ", cannot find finished build for build " + LogUtil.describe(build))
+      logger.debug("Event: " + DeploymentsStatusPublisher.Event.FINISHED + ", cannot find finished build for build " + LogUtil.describe(build))
       return
     }
     runForEveryPublisher(DeploymentsStatusPublisher.Event.FINISHED, buildType, build, object : PublishTask {
@@ -70,7 +71,7 @@ class DeploymentsStatusPublisherListener(
     val buildType = getBuildType(DeploymentsStatusPublisher.Event.INTERRUPTED, build) ?: return
     val finishedBuild = buildHistory.findEntry(build.buildId)
     if (finishedBuild == null) {
-      LOG.debug("Event: " + DeploymentsStatusPublisher.Event.INTERRUPTED.getName() + ", cannot find finished build for build " + LogUtil.describe(build))
+      logger.debug("Event: " + DeploymentsStatusPublisher.Event.INTERRUPTED.getName() + ", cannot find finished build for build " + LogUtil.describe(build))
       return
     }
     runForEveryPublisher(DeploymentsStatusPublisher.Event.INTERRUPTED, buildType, build, object : PublishTask {
@@ -97,7 +98,7 @@ class DeploymentsStatusPublisherListener(
 
   override fun buildProblemsChanged(build: SBuild, before: List<BuildProblemData>, after: List<BuildProblemData>) {
     val buildType = getBuildType(DeploymentsStatusPublisher.Event.MARKED_AS_SUCCESSFUL, build) ?: return
-    if (!before.isEmpty() && after.isEmpty()) {
+    if (before.isNotEmpty() && after.isEmpty()) {
       runForEveryPublisher(DeploymentsStatusPublisher.Event.MARKED_AS_SUCCESSFUL, buildType, build, object : PublishTask {
         @Throws(PublisherException::class)
         override fun run(publisher: DeploymentsStatusPublisher, revision: BuildRevision): Boolean {
@@ -137,7 +138,7 @@ class DeploymentsStatusPublisherListener(
   }
 
   private fun logStatusNotPublished(event: DeploymentsStatusPublisher.Event, buildDescription: String, publisher: DeploymentsStatusPublisher, message: String) {
-    LOG.info(String.format("Event: %s, build %s, publisher %s: %s", event.getName(), buildDescription, publisher.toString(), message))
+    logger.info(String.format("Event: %s, build %s, publisher %s: %s", event.getName(), buildDescription, publisher.toString(), message))
   }
 
   private fun runForEveryPublisher(event: DeploymentsStatusPublisher.Event, buildType: SBuildType, build: SBuild, task: PublishTask) {
@@ -149,7 +150,7 @@ class DeploymentsStatusPublisherListener(
       }
     }
     val publishers = getPublishers(buildType)
-    LOG.debug("Event: " + event.getName() + ", build " + LogUtil.describe(build) + ", publishers: " + publishers.values)
+    logger.debug("Event: " + event.getName() + ", build " + LogUtil.describe(build) + ", publishers: " + publishers.values)
     for ((_, publisher) in publishers) {
       if (!publisher.isEventSupported(event)) {
         continue
@@ -180,7 +181,7 @@ class DeploymentsStatusPublisherListener(
       }
     }
     val publishers = getPublishers(buildType)
-    LOG.debug("Event: " + event.getName() + ", build " + LogUtil.describe(build) + ", publishers: " + publishers.values)
+    logger.debug("Event: " + event.getName() + ", build " + LogUtil.describe(build) + ", publishers: " + publishers.values)
     for ((_, publisher) in publishers) {
       if (!publisher.isEventSupported(event)) {
         continue
@@ -213,7 +214,7 @@ class DeploymentsStatusPublisherListener(
     try {
       task.run(publisher, revision)
     } catch (t: Throwable) {
-      problems.reportProblem(String.format("Commit Status Publisher has failed to publish %s status", event.getName()), publisher, buildDescription, null, t, LOG)
+      problems.reportProblem(String.format("Commit Status Publisher has failed to publish %s status", event.getName()), publisher, buildDescription, null, t, logger)
       if (shouldFailBuild(publisher.getBuildType())) {
         val problemId = "deploymentsStatusPublisher." + publisher.id + "." + revision.root.id
         val problemDescription = if (t is PublisherException) t.message else t.toString()
@@ -287,7 +288,7 @@ class DeploymentsStatusPublisherListener(
   private fun getBuildType(event: DeploymentsStatusPublisher.Event, build: SBuild): SBuildType? {
     val buildType = build.buildType
     if (buildType == null) {
-      LOG.debug("Event: " + event.getName() + ", cannot find buildType for build " + LogUtil.describe(build))
+      logger.debug("Event: " + event.getName() + ", cannot find buildType for build " + LogUtil.describe(build))
     }
     return buildType
   }
@@ -296,7 +297,7 @@ class DeploymentsStatusPublisherListener(
     return try {
       build.buildType
     } catch (e: BuildTypeNotFoundException) {
-      LOG.debug("Event: " + event.getName() + ", cannot find buildType for build " + LogUtil.describe(build))
+      logger.debug("Event: " + event.getName() + ", cannot find buildType for build " + LogUtil.describe(build))
       null
     }
   }
@@ -317,7 +318,6 @@ class DeploymentsStatusPublisherListener(
 
   companion object {
 
-    private val LOG = Logger.getInstance(DeploymentsStatusPublisherListener::class.java.name)
     const val PUBLISHING_ENABLED_PROPERTY_NAME = "teamcity.deploymentsStatusPublisher.enabled"
   }
 
