@@ -1,19 +1,25 @@
 package de.gesellix.github.client.data
 
+import com.squareup.moshi.JsonClass
+
+@JsonClass(generateAdapter = true)
 data class Deployment(
   val id: Long,
-  val url: String,
-  val sha: String,
-  val ref: String,
-  val task: String,
-  val payload: Any, //json
-  val description: String,
-  val environment: String,
-  val creator: User,
+) {
+
+  var url: String? = null
+  var sha: String? = null
+  var ref: String? = null
+  var task: String? = null
+  var payload: Any? = null //json
+  var description: String? = null
+  var environment: String? = null
+  var creator: User? = null
+
   // TODO consider something like `@Json(name = "created_at") val createdAt: String`
-  val created_at: String, //timestamp
-  val updated_at: String, //timestamp
-  val statuses_url: String,
-  val repository_url: String,
-  val nodeId: String,
-)
+  var created_at: String? = null //timestamp
+  var updated_at: String? = null //timestamp
+  var statuses_url: String? = null
+  var repository_url: String? = null
+  var nodeId: String? = null
+}

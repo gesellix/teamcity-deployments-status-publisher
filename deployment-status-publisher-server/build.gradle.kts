@@ -24,10 +24,14 @@ dependencies {
 //  implementation("com.github.salomonbrys.kotson:kotson:2.5.0")
 
   testImplementation("com.squareup.okhttp3:mockwebserver:4.9.0")
+  testImplementation("org.awaitility:awaitility:4.0.3")
+  testRuntimeOnly("org.hamcrest:hamcrest:2.2")
+  testRuntimeOnly("org.hamcrest:hamcrest-core:2.2")
+
 //  implementation("commons-beanutils:commons-beanutils-core:1.8.3")
 //  implementation("commons-codec:commons-codec:1.9")
 //  implementation("commons-logging:commons-logging:1.2")
-  implementation("com.squareup.moshi:moshi:1.8.0")
+  implementation("com.squareup.moshi:moshi:1.11.0")
 //  implementation("com.jcraft:jsch:0.1.50")
 
   provided("org.jetbrains.teamcity:server-api:${teamcityVersion}")

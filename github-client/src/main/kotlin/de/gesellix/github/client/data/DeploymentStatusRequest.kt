@@ -1,8 +1,11 @@
 package de.gesellix.github.client.data
 
-class DeploymentStatusRequest {
+import com.squareup.moshi.JsonClass
 
-  lateinit var state: String
+@JsonClass(generateAdapter = true)
+data class DeploymentStatusRequest(val state: DeploymentStatusState) {
+
+  var log_url: String? = null
   var description: String? = null
-  lateinit var environment: String
+  var environment: String? = null
 }

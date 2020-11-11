@@ -1,5 +1,7 @@
 package de.gesellix.teamcity.deployments.server;
 
+import com.intellij.openapi.util.io.StreamUtil;
+import com.squareup.moshi.Moshi;
 import jetbrains.buildServer.BuildProblemData;
 import jetbrains.buildServer.messages.Status;
 import jetbrains.buildServer.serverSide.BuildRevision;
@@ -15,12 +17,17 @@ import jetbrains.buildServer.serverSide.systemProblems.SystemProblemNotification
 import jetbrains.buildServer.users.SUser;
 import jetbrains.buildServer.vcs.SVcsRoot;
 import jetbrains.buildServer.vcs.VcsRootInstance;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
 import org.jetbrains.annotations.NotNull;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.BDDAssertions.then;
 
@@ -31,6 +38,7 @@ import static org.assertj.core.api.BDDAssertions.then;
 public abstract class DeploymentsStatusPublisherTest extends BaseServerTestCase {
 
   protected static final String REVISION = "314159";
+  protected static final int DEPLOYMENT_ID = 271828;
   protected static final String USER = "MyUser";
   protected static final String COMMENT = "MyComment";
   protected static final String PROBLEM_DESCR = "Problem description";
@@ -53,6 +61,9 @@ public abstract class DeploymentsStatusPublisherTest extends BaseServerTestCase 
   protected OAuthConnectionsManager myOAuthConnectionsManager;
   protected OAuthTokensStorage myOAuthTokenStorage;
 
+  protected MockWebServer mockWebServer;
+  protected Moshi moshi = new Moshi.Builder().build();
+
   protected enum EventToTest {
     QUEUED(DeploymentsStatusPublisher.Event.QUEUED),
     REMOVED(DeploymentsStatusPublisher.Event.REMOVED_FROM_QUEUE),
@@ -68,6 +79,7 @@ public abstract class DeploymentsStatusPublisherTest extends BaseServerTestCase 
     MARKED_SUCCESSFUL(DeploymentsStatusPublisher.Event.MARKED_AS_SUCCESSFUL),
     MARKED_RUNNING_SUCCESSFUL(DeploymentsStatusPublisher.Event.MARKED_AS_SUCCESSFUL),
     TEST_CONNECTION(null),
+    TEST_CONNECTION_READ_ONLY_REPO(null),
     PAYLOAD_ESCAPED(DeploymentsStatusPublisher.Event.FINISHED);
 
     private final DeploymentsStatusPublisher.Event myEvent;
@@ -99,14 +111,20 @@ public abstract class DeploymentsStatusPublisherTest extends BaseServerTestCase 
   }
 
   public void test_testConnection() throws Exception {
-    if (!myPublisherSettings.isTestConnectionSupported()) { return; }
+    if (!myPublisherSettings.isTestConnectionSupported()) {
+      return;
+    }
+    int requestCount = enqueueRequests(EventToTest.TEST_CONNECTION, -1);
     myPublisherSettings.testConnection(myBuildType, myVcsRoot, getPublisherParams());
-    then(waitForRequest()).isNotNull().doesNotMatch(".*error.*")
+    awaitAllRequests(requestCount, 5, TimeUnit.SECONDS);
+    then(getRequestAsString()).isNotNull().doesNotMatch(".*error.*")
       .matches(myExpectedRegExps.get(EventToTest.TEST_CONNECTION));
   }
 
   public void test_testConnection_fails_on_readonly() {
+    int requestCount = enqueueRequests(EventToTest.TEST_CONNECTION_READ_ONLY_REPO, -1);
     test_testConnection_failure(myReadOnlyVcsURL, getPublisherParams());
+    awaitAllRequests(requestCount, 5, TimeUnit.SECONDS);
   }
 
   public void test_testConnection_fails_on_bad_repo_url() {
@@ -114,11 +132,14 @@ public abstract class DeploymentsStatusPublisherTest extends BaseServerTestCase 
   }
 
   public void test_testConnection_fails_on_missing_target() {
+    mockWebServer.enqueue(new MockResponse().setResponseCode(404));
     test_testConnection_failure("http://localhost/nouser/norepo", getPublisherParams());
   }
 
   protected void test_testConnection_failure(String repoURL, Map<String, String> params) {
-    if (!myPublisherSettings.isTestConnectionSupported()) { return; }
+    if (!myPublisherSettings.isTestConnectionSupported()) {
+      return;
+    }
     myVcsRoot.setProperties(Collections.singletonMap("url", repoURL));
     try {
       myPublisherSettings.testConnection(myBuildType, myVcsRoot, params);
@@ -145,16 +166,26 @@ public abstract class DeploymentsStatusPublisherTest extends BaseServerTestCase 
   }
 
   public void test_buildStarted() throws Exception {
-    if (!isToBeTested(EventToTest.STARTED)) { return; }
-    myPublisher.buildStarted(startBuildInCurrentBranch(myBuildType), myRevision);
-    then(waitForRequest()).isNotNull().doesNotMatch(".*error.*")
+    if (!isToBeTested(EventToTest.STARTED)) {
+      return;
+    }
+    SRunningBuild build = startBuildInCurrentBranch(myBuildType);
+    int requestCount = enqueueRequests(EventToTest.STARTED, build.getBuildId());
+    myPublisher.buildStarted(build, myRevision);
+    awaitAllRequests(requestCount, 5, TimeUnit.SECONDS);
+    then(getRequestAsString()).isNotNull().doesNotMatch(".*error.*")
       .matches(myExpectedRegExps.get(EventToTest.STARTED));
   }
 
   public void test_buildFinished_Successfully() throws Exception {
-    if (!isToBeTested(EventToTest.FINISHED)) { return; }
-    myPublisher.buildFinished(createBuildInCurrentBranch(myBuildType, Status.NORMAL), myRevision);
-    then(waitForRequest()).isNotNull().doesNotMatch(".*error.*")
+    if (!isToBeTested(EventToTest.FINISHED)) {
+      return;
+    }
+    SFinishedBuild build = createBuildInCurrentBranch(myBuildType, Status.NORMAL);
+    int requestCount = enqueueRequests(EventToTest.FINISHED, build.getBuildId());
+    myPublisher.buildFinished(build, myRevision);
+    awaitAllRequests(requestCount, 5, TimeUnit.SECONDS);
+    then(getRequestAsString()).isNotNull().doesNotMatch(".*error.*")
       .matches(myExpectedRegExps.get(EventToTest.FINISHED));
   }
 
@@ -163,8 +194,11 @@ public abstract class DeploymentsStatusPublisherTest extends BaseServerTestCase 
 
   public void test_buildFinished_Failed() throws Exception {
     if (!isToBeTested(EventToTest.FAILED)) { return; }
-    myPublisher.buildFinished(createBuildInCurrentBranch(myBuildType, Status.FAILURE), myRevision);
-    then(waitForRequest()).isNotNull().doesNotMatch(".*error.*")
+    SFinishedBuild build = createBuildInCurrentBranch(myBuildType, Status.FAILURE);
+    int requestCount = enqueueRequests(EventToTest.FAILED, build.getBuildId());
+    myPublisher.buildFinished(build, myRevision);
+    awaitAllRequests(requestCount, 5, TimeUnit.SECONDS);
+    then(getRequestAsString()).isNotNull().doesNotMatch(".*error.*")
       .matches(myExpectedRegExps.get(EventToTest.FAILED));
   }
 
@@ -199,11 +233,15 @@ public abstract class DeploymentsStatusPublisherTest extends BaseServerTestCase 
   }
 
   public void test_buildInterrupted() throws Exception {
-    if (!isToBeTested(EventToTest.INTERRUPTED)) { return; }
-    SFinishedBuild finishedBuild = createBuildInCurrentBranch(myBuildType, Status.NORMAL);
-    finishedBuild.addBuildProblem(BuildProblemData.createBuildProblem("problem", "type", PROBLEM_DESCR));
-    myPublisher.buildInterrupted(finishedBuild, myRevision);
-    then(waitForRequest()).isNotNull().doesNotMatch(".*error.*")
+    if (!isToBeTested(EventToTest.INTERRUPTED)) {
+      return;
+    }
+    SFinishedBuild build = createBuildInCurrentBranch(myBuildType, Status.NORMAL);
+    int requestCount = enqueueRequests(EventToTest.INTERRUPTED, build.getBuildId());
+    build.addBuildProblem(BuildProblemData.createBuildProblem("problem", "type", PROBLEM_DESCR));
+    myPublisher.buildInterrupted(build, myRevision);
+    awaitAllRequests(requestCount, 5, TimeUnit.SECONDS);
+    then(getRequestAsString()).isNotNull().doesNotMatch(".*error.*")
       .matches(myExpectedRegExps.get(EventToTest.INTERRUPTED));
   }
 
@@ -217,26 +255,43 @@ public abstract class DeploymentsStatusPublisherTest extends BaseServerTestCase 
   }
 
   public void test_buildMarkedAsSuccessful() throws Exception {
-    if (!isToBeTested(EventToTest.MARKED_SUCCESSFUL)) { return; }
-    myPublisher.buildFinished(createBuildInCurrentBranch(myBuildType, Status.FAILURE), myRevision);
-    waitForRequest();
-    myPublisher.buildMarkedAsSuccessful(createBuildInCurrentBranch(myBuildType, Status.NORMAL), myRevision, false);
-    then(waitForRequest()).isNotNull().doesNotMatch(".*error.*")
+    if (!isToBeTested(EventToTest.MARKED_SUCCESSFUL)) {
+      return;
+    }
+    SFinishedBuild build1 = createBuildInCurrentBranch(myBuildType, Status.FAILURE);
+    int requestCount = enqueueRequests(EventToTest.FINISHED, build1.getBuildId());
+    myPublisher.buildFinished(build1, myRevision);
+    SFinishedBuild build2 = createBuildInCurrentBranch(myBuildType, Status.NORMAL);
+    requestCount += enqueueRequests(EventToTest.MARKED_SUCCESSFUL, build2.getBuildId());
+    myPublisher.buildMarkedAsSuccessful(build2, myRevision, false);
+
+    awaitAllRequests(requestCount, 5, TimeUnit.SECONDS);
+    then(getRequestAsString()).isNotNull().doesNotMatch(".*error.*")
       .matches(myExpectedRegExps.get(EventToTest.MARKED_SUCCESSFUL));
   }
 
   public void test_buildMarkedAsSuccessful_WhileRunning() throws Exception {
-    if (!isToBeTested(EventToTest.MARKED_RUNNING_SUCCESSFUL)) { return; }
-    myPublisher.buildMarkedAsSuccessful(startBuildInCurrentBranch(myBuildType), myRevision, true);
-    then(waitForRequest()).isNotNull().doesNotMatch(".*error.*")
+    if (!isToBeTested(EventToTest.MARKED_RUNNING_SUCCESSFUL)) {
+      return;
+    }
+    SRunningBuild build = startBuildInCurrentBranch(myBuildType);
+    int requestCount = enqueueRequests(EventToTest.MARKED_RUNNING_SUCCESSFUL, build.getBuildId());
+    myPublisher.buildMarkedAsSuccessful(build, myRevision, true);
+    awaitAllRequests(requestCount, 5, TimeUnit.SECONDS);
+    then(getRequestAsString()).isNotNull().doesNotMatch(".*error.*")
       .matches(myExpectedRegExps.get(EventToTest.MARKED_RUNNING_SUCCESSFUL));
   }
 
   public void ensure_payload_escaped() throws Exception {
-    if (!isToBeTested(EventToTest.PAYLOAD_ESCAPED)) { return; }
+    if (!isToBeTested(EventToTest.PAYLOAD_ESCAPED)) {
+      return;
+    }
     myBuildType.setName(BT_NAME_2BE_ESCAPED);
-    myPublisher.buildFinished(createBuildInCurrentBranch(myBuildType, Status.FAILURE), myRevision);
-    then(waitForRequest()).isNotNull().doesNotMatch(".*error.*")
+    SFinishedBuild build = createBuildInCurrentBranch(myBuildType, Status.FAILURE);
+    int requestCount = enqueueRequests(EventToTest.PAYLOAD_ESCAPED, build.getBuildId());
+    myPublisher.buildFinished(build, myRevision);
+    awaitAllRequests(requestCount, 5, TimeUnit.SECONDS);
+    then(getRequestAsString()).isNotNull().doesNotMatch(".*error.*")
       .matches(myExpectedRegExps.get(EventToTest.PAYLOAD_ESCAPED));
   }
 
@@ -254,11 +309,35 @@ public abstract class DeploymentsStatusPublisherTest extends BaseServerTestCase 
     return toBeTested;
   }
 
+  protected int enqueueRequests(EventToTest eventToTest, long buildId) {
+    return 0;
+  }
+
+  protected void awaitAllRequests(int requestCount, int timeout, TimeUnit timeoutUnit) {
+  }
+
   protected String waitForRequest() throws InterruptedException {
     return getRequestAsString();
   }
 
-  protected abstract String getRequestAsString();
+  protected abstract RecordedRequest getLastRequest();
+
+  protected String getRequestAsString() {
+    RecordedRequest lastRequest = getLastRequest();
+    if (lastRequest == null) {
+      return null;
+    }
+    String requestAsString = lastRequest.getRequestLine();
+    if (lastRequest.getBodySize() > 0) {
+      try {
+        requestAsString += "\tENTITY: " + StreamUtil.readText(lastRequest.getBody().inputStream());
+      }
+      catch (IOException e) {
+        // ignore silently
+      }
+    }
+    return requestAsString;
+  }
 
   protected SRunningBuild startBuildInCurrentBranch(SBuildType buildType) {
     return null == myBranch ? startBuild(buildType) : startBuildInBranch(buildType, myBranch);

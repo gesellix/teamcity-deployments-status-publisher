@@ -37,7 +37,7 @@ import kotlin.collections.HashMap
 import kotlin.collections.set
 
 class GitHubSettings(
-  private val changeStatusUpdater: ChangeStatusUpdater,
+  private val deploymentsStatusUpdater: DeploymentsStatusUpdater,
   executorServices: ExecutorServices,
   descriptor: PluginDescriptor,
   problems: DeploymentsStatusPublisherProblems,
@@ -112,7 +112,7 @@ class GitHubSettings(
 
   @Throws(PublisherException::class)
   override fun testConnection(buildTypeOrTemplate: BuildTypeIdentity, root: VcsRoot, params: Map<String, String>) {
-    changeStatusUpdater.testConnection(root, params)
+    deploymentsStatusUpdater.testConnection(root, params)
   }
 
   override fun getParametersProcessor(): PropertiesProcessor? {
@@ -171,7 +171,7 @@ class GitHubSettings(
   }
 
   override fun createPublisher(buildType: SBuildType, buildFeatureId: String, params: Map<String, String>): DeploymentsStatusPublisher? {
-    return GitHubPublisher(this, buildType, buildFeatureId, changeStatusUpdater, params, problems)
+    return GitHubPublisher(this, buildType, buildFeatureId, deploymentsStatusUpdater, params, problems)
   }
 
   override fun isPublishingForVcsRoot(vcsRoot: VcsRoot?): Boolean {

@@ -18,10 +18,12 @@ package de.gesellix.teamcity.deployments.server.github.api.impl
 import de.gesellix.github.client.GitHubClient
 import de.gesellix.github.client.HttpStatusException
 import de.gesellix.github.client.data.CommitCommentRequest
-import de.gesellix.github.client.data.CommitStatusRequest
+import de.gesellix.github.client.data.Deployment
+import de.gesellix.github.client.data.DeploymentRequest
+import de.gesellix.github.client.data.DeploymentStatus
+import de.gesellix.github.client.data.DeploymentStatusRequest
 import de.gesellix.teamcity.deployments.server.PublisherException
 import de.gesellix.teamcity.deployments.server.github.api.GitHubApi
-import de.gesellix.teamcity.deployments.server.github.api.GitHubChangeState
 import de.gesellix.teamcity.deployments.server.logger
 import java.io.IOException
 import java.util.*
@@ -52,26 +54,29 @@ abstract class GitHubApiImpl(private val gh: GitHubClient) : GitHubApi {
     }
   }
 
-  @Throws(IOException::class)
-  override fun setChangeStatus(
-    repoOwner: String,
-    repositoryName: String,
-    hash: String,
-    status: GitHubChangeState,
-    targetUrl: String,
-    description: String,
-    context: String?
-  ) {
-    val commitStatusRequest = CommitStatusRequest(state = status.state)
-    commitStatusRequest.target_url = targetUrl
-    commitStatusRequest.description = description
-    commitStatusRequest.context = context
+  override fun getDeployments(
+    owner: String,
+    repo: String,
+    filters: Map<String, String>
+  ): List<Deployment>? {
+    return gh.getDeployments(owner, repo, filters)
+  }
 
-    try {
-      gh.updateCommitStatus(repoOwner, repositoryName, hash, commitStatusRequest)
-    } catch (e: Exception) {
-      throw IOException("request failed: " + e.message, e)
-    }
+  override fun createDeployment(
+    owner: String,
+    repo: String,
+    deploymentRequest: DeploymentRequest
+  ): Deployment? {
+    return gh.createDeployment(owner, repo, deploymentRequest)
+  }
+
+  override fun updateDeploymentStatus(
+    owner: String,
+    repo: String,
+    deploymentId: Long,
+    deploymentStatusRequest: DeploymentStatusRequest
+  ): DeploymentStatus? {
+    return gh.updateDeploymentStatus(owner, repo, deploymentId, deploymentStatusRequest)
   }
 
   override fun isPullRequestMergeBranch(branchName: String): Boolean {

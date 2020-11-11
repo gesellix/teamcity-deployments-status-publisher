@@ -30,8 +30,7 @@ object GitRepositoryParser {
       if (repo.endsWith(".git")) repo = repo.substring(0, repo.length - 4)
       return Repository(userGroup, repo)
     }
-    val url: URI
-    url = try {
+    val url: URI = try {
       URI(uri)
     } catch (e: URISyntaxException) {
       LOG.warn("Cannot parse Git repository url $uri", e)

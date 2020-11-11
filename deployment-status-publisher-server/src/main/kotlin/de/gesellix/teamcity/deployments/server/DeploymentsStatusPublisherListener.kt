@@ -256,7 +256,7 @@ class DeploymentsStatusPublisherListener(
     for (revision in build.revisions) {
       val root = revision.root.parent
       if (vcsRootId == root.externalId || vcsRootId == root.id.toString()) {
-        return Arrays.asList(revision)
+        return listOf(revision)
       }
     }
     return emptyList()
@@ -271,7 +271,7 @@ class DeploymentsStatusPublisherListener(
     val b = p.associatedBuild
     if (b != null) {
       val revisions = getBuildRevisionForVote(publisher, b)
-      if (!revisions.isEmpty()) {
+      if (revisions.isNotEmpty()) {
         return revisions
       }
     }

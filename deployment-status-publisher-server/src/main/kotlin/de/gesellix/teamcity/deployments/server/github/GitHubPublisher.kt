@@ -1,14 +1,15 @@
 package de.gesellix.teamcity.deployments.server.github
 
-import com.intellij.openapi.diagnostic.Logger
 import de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisherBase
 import de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisherProblems
 import de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisherSettings
 import de.gesellix.teamcity.deployments.server.GITHUB_CONTEXT
 import de.gesellix.teamcity.deployments.server.GITHUB_CUSTOM_CONTEXT_BUILD_PARAM
+import de.gesellix.teamcity.deployments.server.GITHUB_DEPLOYMENT_ENVIRONMENT
 import de.gesellix.teamcity.deployments.server.GITHUB_PUBLISHER_ID
 import de.gesellix.teamcity.deployments.server.GITHUB_SERVER
 import de.gesellix.teamcity.deployments.server.PublisherException
+import de.gesellix.teamcity.deployments.server.logger
 import jetbrains.buildServer.serverSide.BuildRevision
 import jetbrains.buildServer.serverSide.SBuild
 import jetbrains.buildServer.serverSide.SBuildType
@@ -18,11 +19,14 @@ import java.util.*
 
 class GitHubPublisher(
   settings: DeploymentsStatusPublisherSettings,
-  buildType: SBuildType, buildFeatureId: String,
-  private val updater: ChangeStatusUpdater,
+  buildType: SBuildType,
+  buildFeatureId: String,
+  private val updater: DeploymentsStatusUpdater,
   params: Map<String, String>,
   problems: DeploymentsStatusPublisherProblems
 ) : DeploymentsStatusPublisherBase(settings, buildType, buildFeatureId, params, problems) {
+
+  private val logger by logger(GitHubPublisher::class.java.name)
 
   override fun toString(): String {
     return "github"
@@ -64,13 +68,14 @@ class GitHubPublisher(
     if (isStarting && !h.shouldReportOnStart()) return
     if (!isStarting && !h.shouldReportOnFinish()) return
     if (revision.root.vcsName != "jetbrains.git") {
-      LOG.warn("No revisions were found to update GitHub status. Please check you have Git VCS roots in the build configuration")
+      logger.warn("No revisions were found to update GitHub status. Please check you have Git VCS roots in the build configuration")
       return
     }
+    val environment = build.parametersProvider[GITHUB_DEPLOYMENT_ENVIRONMENT] ?: "production"
     if (isStarting) {
-      h.scheduleChangeStarted(revision.repositoryVersion, build)
+      h.scheduleChangeStarted(revision.repositoryVersion, build, environment)
     } else {
-      h.scheduleChangeCompleted(revision.repositoryVersion, build)
+      h.scheduleChangeCompleted(revision.repositoryVersion, build, environment)
     }
   }
 
@@ -98,10 +103,5 @@ class GitHubPublisher(
     } else {
       build.valueResolver.resolve(value).result
     }
-  }
-
-  companion object {
-
-    private val LOG = Logger.getInstance(GitHubPublisher::class.java.name)
   }
 }

@@ -119,6 +119,15 @@ class GitHubClient(
     return response.body()
   }
 
+  fun getDeployments(owner: String, repo: String, filters: Map<String, String>): List<Deployment>? {
+    val deployments = github.getDeployments(owner, repo, filters)
+    val response = deployments.execute() // TODO consider `.enqueue()`
+    if (!response.isSuccessful) {
+      throw RuntimeException("error: code=${response.code()} body=${response.errorBody()?.string()}")
+    }
+    return response.body()
+  }
+
   fun createDeployment(owner: String, repo: String, deploymentRequest: DeploymentRequest): Deployment? {
     val createDeployment = github.createDeployment(owner, repo, deploymentRequest)
     val response = createDeployment.execute() // TODO consider `.enqueue()`
@@ -128,7 +137,7 @@ class GitHubClient(
     return response.body()
   }
 
-  fun updateDeploymentStatus(owner: String, repo: String, deploymentId: Int, deploymentStatusRequest: DeploymentStatusRequest): DeploymentStatus? {
+  fun updateDeploymentStatus(owner: String, repo: String, deploymentId: Long, deploymentStatusRequest: DeploymentStatusRequest): DeploymentStatus? {
     val updateDeploymentStatus = github.updateDeploymentStatus(owner, repo, deploymentId, deploymentStatusRequest)
     val response = updateDeploymentStatus.execute() // TODO consider `.enqueue()`
     if (!response.isSuccessful) {

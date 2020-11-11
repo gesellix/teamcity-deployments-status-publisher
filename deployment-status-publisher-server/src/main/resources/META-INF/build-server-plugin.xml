@@ -9,7 +9,7 @@
   <bean class="de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisherFeatureController"/>
   <bean class="de.gesellix.teamcity.deployments.server.PublisherManager"/>
 
-  <bean class="de.gesellix.teamcity.deployments.server.github.ChangeStatusUpdater"/>
+  <bean class="de.gesellix.teamcity.deployments.server.github.DeploymentsStatusUpdater"/>
   <bean class="de.gesellix.teamcity.deployments.server.github.api.impl.GitHubApiFactoryImpl"/>
   <bean class="de.gesellix.teamcity.deployments.server.github.GitHubSettings"/>
 

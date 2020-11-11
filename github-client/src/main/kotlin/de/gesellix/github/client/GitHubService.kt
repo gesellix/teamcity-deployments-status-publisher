@@ -18,6 +18,7 @@ import retrofit2.http.GET
 import retrofit2.http.Headers
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.QueryMap
 
 interface GitHubService {
 
@@ -72,6 +73,14 @@ interface GitHubService {
   ): Call<PullRequest>
 
   @Headers("Accept: application/vnd.github.ant-man-preview+json, application/vnd.github.flash-preview+json")
+  @GET("repos/{owner}/{repo}/deployments")
+  fun getDeployments(
+    @Path("owner") owner: String,
+    @Path("repo") repo: String,
+    @QueryMap filters: Map<String, String>
+  ): Call<List<Deployment>>
+
+  @Headers("Accept: application/vnd.github.ant-man-preview+json, application/vnd.github.flash-preview+json")
   @POST("repos/{owner}/{repo}/deployments")
   fun createDeployment(
     @Path("owner") owner: String,
@@ -84,7 +93,7 @@ interface GitHubService {
   fun updateDeploymentStatus(
     @Path("owner") owner: String,
     @Path("repo") repo: String,
-    @Path("deploymentId") deploymentId: Int,
+    @Path("deploymentId") deploymentId: Long,
     @Body deploymentStatusRequest: DeploymentStatusRequest
   ): Call<DeploymentStatus>
 }
