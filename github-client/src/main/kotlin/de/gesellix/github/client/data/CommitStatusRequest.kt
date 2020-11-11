@@ -1,5 +1,8 @@
 package de.gesellix.github.client.data
 
+import com.squareup.moshi.JsonClass
+
+@JsonClass(generateAdapter = true)
 data class CommitStatusRequest(var state: String = "") {
 
   var target_url: String? = null

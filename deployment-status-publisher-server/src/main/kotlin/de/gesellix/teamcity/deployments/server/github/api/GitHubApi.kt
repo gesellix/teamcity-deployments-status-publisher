@@ -15,6 +15,10 @@
  */
 package de.gesellix.teamcity.deployments.server.github.api
 
+import de.gesellix.github.client.data.Deployment
+import de.gesellix.github.client.data.DeploymentRequest
+import de.gesellix.github.client.data.DeploymentStatus
+import de.gesellix.github.client.data.DeploymentStatusRequest
 import de.gesellix.teamcity.deployments.server.PublisherException
 import java.io.IOException
 
@@ -27,16 +31,24 @@ interface GitHubApi {
   @Throws(PublisherException::class)
   fun testConnection(repoOwner: String, repositoryName: String)
 
-  @Throws(IOException::class)
-  fun setChangeStatus(
-    repoOwner: String,
-    repositoryName: String,
-    hash: String,
-    status: GitHubChangeState,
-    targetUrl: String,
-    description: String,
-    context: String?
-  )
+  fun getDeployments(
+    owner: String,
+    repo: String,
+    filters: Map<String, String>
+  ): List<Deployment>?
+
+  fun createDeployment(
+    owner: String,
+    repo: String,
+    deploymentRequest: DeploymentRequest
+  ): Deployment?
+
+  fun updateDeploymentStatus(
+    owner: String,
+    repo: String,
+    deploymentId: Long,
+    deploymentStatusRequest: DeploymentStatusRequest
+  ): DeploymentStatus?
 
   /**
    * checks if specified branch represents GitHub pull request merge branch,

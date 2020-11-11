@@ -1,9 +1,11 @@
 package de.gesellix.github.client
 
+import com.squareup.moshi.Moshi
 import de.gesellix.github.client.data.CommitCommentRequest
 import de.gesellix.github.client.data.CommitStatusRequest
 import de.gesellix.github.client.data.DeploymentRequest
 import de.gesellix.github.client.data.DeploymentStatusRequest
+import de.gesellix.github.client.data.DeploymentStatusState.in_progress
 import okhttp3.logging.HttpLoggingInterceptor
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -126,17 +128,41 @@ internal class GitHubClientTest {
   }
 
   @Test
+  fun test_get_deployments() {
+    val response = MockResponse()
+      .setResponseCode(HttpURLConnection.HTTP_OK)
+      .setBody(javaClass.getResource("/get_deployments_response.json").readText())
+    mockWebServer.enqueue(response)
+
+    val deployments = client.getDeployments(
+      "gesellix",
+      "deployment-tests",
+      mapOf(
+        "sha" to "9bd5374e375e3416ff981122703a0e4079055fea",
+        "environment" to "production"
+      )
+    )
+
+    assertEquals(5, deployments?.size)
+  }
+
+  @Test
   fun test_create_deployment() {
     val response = MockResponse()
       .setResponseCode(HttpURLConnection.HTTP_OK)
       .setBody(javaClass.getResource("/create_deployment_response.json").readText())
     mockWebServer.enqueue(response)
-    val deploymentRequest = DeploymentRequest("9bd5374e375e3416ff981122703a0e4079055fea", "test")
+    val payload = Moshi.Builder().build().adapter(Map::class.java).toJson(mapOf("foo" to "bar"))
+    val deploymentRequest = DeploymentRequest("9bd5374e375e3416ff981122703a0e4079055fea").apply {
+      this.environment = "test"
+      this.payload = payload
+    }
 
-    val deployment = client.createDeployment("owner", "repo", deploymentRequest)
+    val deployment = client.createDeployment("gesellix", "deployment-tests", deploymentRequest)
 
-    assertEquals(765432198, deployment?.id)
-    assertEquals("2020-11-08T15:04:01Z", deployment?.created_at)
+    assertEquals(289108418, deployment?.id)
+    assertEquals("2020-11-10T22:38:11Z", deployment?.created_at)
+    assertEquals(payload, deployment?.payload)
   }
 
   @Test
@@ -145,8 +171,7 @@ internal class GitHubClientTest {
       .setResponseCode(HttpURLConnection.HTTP_OK)
       .setBody(javaClass.getResource("/update_deployment_status_response.json").readText())
     mockWebServer.enqueue(response)
-    val deploymentStatusRequest = DeploymentStatusRequest()
-    deploymentStatusRequest.state = "in_progress"
+    val deploymentStatusRequest = DeploymentStatusRequest(in_progress)
     deploymentStatusRequest.environment = "test"
 
     val deploymentStatus = client.updateDeploymentStatus("gesellix", "deployment-tests", 765432198, deploymentStatusRequest)

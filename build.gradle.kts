@@ -1,5 +1,6 @@
 plugins {
   kotlin("jvm") version "1.4.10" apply false
+  kotlin("kapt") version "1.4.10" apply false
   id("com.github.rodm.teamcity-server") version "1.3.2" apply false
   id("com.github.rodm.teamcity-environments") version "1.3.2" apply false
 }
@@ -23,6 +24,7 @@ allprojects {
 
   val dependencyVersions = listOf(
     "com.google.code.gson:gson:2.2.4",
+    "com.squareup.moshi:moshi:1.11.0",
     "com.squareup.okhttp3:okhttp:4.9.0",
     "com.squareup.okio:okio:2.8.0",
     "commons-codec:commons-codec:1.9",
@@ -39,11 +41,12 @@ allprojects {
     "xerces:xercesImpl:2.9.1"
   )
   val dependencyGroupVersions = mapOf(
-    "org.hamcrest" to "1.3",
+    "org.hamcrest" to "2.2",
     "org.springframework" to "4.3.12.RELEASE"
   )
   configurations {
     all {
+      exclude(module = "hamcrest-integration")
       resolutionStrategy {
         failOnVersionConflict()
         force(dependencyVersions)

@@ -13,6 +13,7 @@ const val GITHUB_OAUTH_USER = "github_oauth_user"
 const val GITHUB_OAUTH_PROVIDER_ID = "github_oauth_provider_id"
 const val GITHUB_CUSTOM_CONTEXT_BUILD_PARAM = "teamcity.deploymentsStatusPublisher.githubContext"
 const val GITHUB_CONTEXT = "github_context"
+const val GITHUB_DEPLOYMENT_ENVIRONMENT = "github_deployment_environment"
 
 class Constants {
 
