@@ -126,8 +126,13 @@ public class GitHubPublisherTest extends HttpPublisherTest {
       return 1;
     }
     if (eventToTest == EventToTest.STARTED) {
-      mockWebServer.enqueue(new MockResponse().setResponseCode(201).setBody(moshi.adapter(Deployment.class).toJson(new Deployment(DEPLOYMENT_ID))));
-      return 1;
+      List<Deployment> deployments = new ArrayList<>();
+      Deployment deployment = new Deployment(DEPLOYMENT_ID);
+      deployment.setPayload(moshi.adapter(Map.class).toJson(Collections.singletonMap("buildIdAsString", "" + buildId)));
+      deployments.add(deployment);
+      mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody(moshi.adapter(List.class).toJson(deployments)));
+      mockWebServer.enqueue(new MockResponse().setResponseCode(201).setBody(moshi.adapter(DeploymentStatus.class).toJson(new DeploymentStatus(4141, "123", DeploymentStatusState.in_progress))));
+      return 2;
     }
     if (eventToTest == EventToTest.INTERRUPTED) {
       List<Deployment> deployments = new ArrayList<>();
@@ -139,8 +144,13 @@ public class GitHubPublisherTest extends HttpPublisherTest {
       return 2;
     }
     if (eventToTest == EventToTest.MARKED_RUNNING_SUCCESSFUL) {
-      mockWebServer.enqueue(new MockResponse().setResponseCode(201).setBody(moshi.adapter(Deployment.class).toJson(new Deployment(DEPLOYMENT_ID))));
-      return 1;
+      List<Deployment> deployments = new ArrayList<>();
+      Deployment deployment = new Deployment(DEPLOYMENT_ID);
+      deployment.setPayload(moshi.adapter(Map.class).toJson(Collections.singletonMap("buildIdAsString", "" + buildId)));
+      deployments.add(deployment);
+      mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody(moshi.adapter(List.class).toJson(deployments)));
+      mockWebServer.enqueue(new MockResponse().setResponseCode(201).setBody(moshi.adapter(DeploymentStatus.class).toJson(new DeploymentStatus(4141, "123", DeploymentStatusState.in_progress))));
+      return 2;
     }
     if (eventToTest == EventToTest.MARKED_SUCCESSFUL) {
       List<Deployment> deployments = new ArrayList<>();

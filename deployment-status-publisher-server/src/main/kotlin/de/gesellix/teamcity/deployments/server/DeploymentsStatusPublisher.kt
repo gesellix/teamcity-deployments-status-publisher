@@ -17,6 +17,9 @@ interface DeploymentsStatusPublisher {
   fun buildRemovedFromQueue(build: SQueuedBuild, revision: BuildRevision, user: User?, comment: String?): Boolean
 
   @Throws(PublisherException::class)
+  fun buildStarting(build: SRunningBuild, revision: BuildRevision): String?
+
+  @Throws(PublisherException::class)
   fun buildStarted(build: SRunningBuild, revision: BuildRevision): Boolean
 
   @Throws(PublisherException::class)
@@ -53,6 +56,7 @@ interface DeploymentsStatusPublisher {
   fun isEventSupported(event: Event): Boolean
 
   enum class Event constructor(name: String, eventPriority: EventPriority = EventPriority.CONSEQUENT) {
+    STARTING("buildStarting", EventPriority.FIRST),
     STARTED("buildStarted", EventPriority.FIRST),
     FINISHED("buildFinished"),
     QUEUED("buildQueued", EventPriority.FIRST),

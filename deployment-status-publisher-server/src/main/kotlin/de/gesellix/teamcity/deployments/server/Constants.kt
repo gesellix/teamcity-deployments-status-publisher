@@ -15,6 +15,8 @@ const val GITHUB_CUSTOM_CONTEXT_BUILD_PARAM = "teamcity.deploymentsStatusPublish
 const val GITHUB_CONTEXT = "github_context"
 const val GITHUB_DEPLOYMENT_ENVIRONMENT = "github_deployment_environment"
 
+const val BUILD_ID_KEY = "buildIdAsString"
+
 class Constants {
 
   val publisherIdParam: String

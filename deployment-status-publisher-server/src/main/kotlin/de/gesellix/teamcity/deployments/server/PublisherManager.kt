@@ -24,7 +24,7 @@ class PublisherManager(publisherSettings: Collection<DeploymentsStatusPublisherS
           settings.add(s)
         }
       }
-      settings.sortWith(Comparator { o1, o2 -> o1.getName().compareTo(o2.getName()) })
+      settings.sortWith { o1, o2 -> o1.getName().compareTo(o2.getName()) }
       return settings
     }
 }

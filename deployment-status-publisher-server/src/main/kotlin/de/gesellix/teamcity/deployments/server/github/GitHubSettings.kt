@@ -49,6 +49,7 @@ class GitHubSettings(
 
   private val supportedEvents: Set<DeploymentsStatusPublisher.Event> = object : HashSet<DeploymentsStatusPublisher.Event>() {
     init {
+      add(DeploymentsStatusPublisher.Event.STARTING)
       add(DeploymentsStatusPublisher.Event.STARTED)
       add(DeploymentsStatusPublisher.Event.FINISHED)
       add(DeploymentsStatusPublisher.Event.INTERRUPTED)

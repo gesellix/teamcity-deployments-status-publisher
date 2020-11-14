@@ -8,6 +8,6 @@ Target TeamCity version is 2017.2, but should work in more recent versions, too.
 ## Developing/Testing locally
 
 ```shell script
-docker-compose up
 ./gradlew clean deployToTeamcity2017.2
+docker-compose up
 ```

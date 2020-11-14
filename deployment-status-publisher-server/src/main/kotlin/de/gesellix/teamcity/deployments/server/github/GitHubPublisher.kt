@@ -1,5 +1,6 @@
 package de.gesellix.teamcity.deployments.server.github
 
+import de.gesellix.github.client.data.Deployment
 import de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisherBase
 import de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisherProblems
 import de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisherSettings
@@ -36,26 +37,31 @@ class GitHubPublisher(
     get() = GITHUB_PUBLISHER_ID
 
   @Throws(PublisherException::class)
+  override fun buildStarting(build: SRunningBuild, revision: BuildRevision): String? {
+    return createDeployment(build, revision)?.id?.toString()
+  }
+
+  @Throws(PublisherException::class)
   override fun buildStarted(build: SRunningBuild, revision: BuildRevision): Boolean {
-    updateBuildStatus(build, revision, true)
+    updateDeploymentStatus(build, revision, true)
     return true
   }
 
   @Throws(PublisherException::class)
   override fun buildFinished(build: SFinishedBuild, revision: BuildRevision): Boolean {
-    updateBuildStatus(build, revision, false)
+    updateDeploymentStatus(build, revision, false)
     return true
   }
 
   @Throws(PublisherException::class)
   override fun buildInterrupted(build: SFinishedBuild, revision: BuildRevision): Boolean {
-    updateBuildStatus(build, revision, false)
+    updateDeploymentStatus(build, revision, false)
     return true
   }
 
   @Throws(PublisherException::class)
   override fun buildMarkedAsSuccessful(build: SBuild, revision: BuildRevision, buildInProgress: Boolean): Boolean {
-    updateBuildStatus(build, revision, buildInProgress)
+    updateDeploymentStatus(build, revision, buildInProgress)
     return true
   }
 
@@ -63,7 +69,19 @@ class GitHubPublisher(
     get() = params[GITHUB_SERVER]
 
   @Throws(PublisherException::class)
-  private fun updateBuildStatus(build: SBuild, revision: BuildRevision, isStarting: Boolean) {
+  private fun createDeployment(build: SBuild, revision: BuildRevision): Deployment? {
+    val h = updater.getUpdateHandler(revision.root, getParams(build), this)
+    if (!h.shouldReportOnStart()) return null
+    if (revision.root.vcsName != "jetbrains.git") {
+      logger.warn("No revisions were found to update GitHub status. Please check you have Git VCS roots in the build configuration")
+      return null
+    }
+    val environment = build.parametersProvider[GITHUB_DEPLOYMENT_ENVIRONMENT] ?: "production"
+    return h.runCreateDeployment(revision.repositoryVersion, build, environment)
+  }
+
+  @Throws(PublisherException::class)
+  private fun updateDeploymentStatus(build: SBuild, revision: BuildRevision, isStarting: Boolean) {
     val h = updater.getUpdateHandler(revision.root, getParams(build), this)
     if (isStarting && !h.shouldReportOnStart()) return
     if (!isStarting && !h.shouldReportOnFinish()) return
