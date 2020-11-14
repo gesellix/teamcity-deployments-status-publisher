@@ -17,9 +17,11 @@ package de.gesellix.teamcity.deployments.server.github
 
 import com.squareup.moshi.Moshi
 import de.gesellix.github.client.Timeout
+import de.gesellix.github.client.data.Deployment
 import de.gesellix.github.client.data.DeploymentRequest
 import de.gesellix.github.client.data.DeploymentStatusRequest
 import de.gesellix.github.client.data.DeploymentStatusState
+import de.gesellix.teamcity.deployments.server.BUILD_ID_KEY
 import de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisherProblems
 import de.gesellix.teamcity.deployments.server.GITHUB_AUTH_TYPE
 import de.gesellix.teamcity.deployments.server.GITHUB_CONTEXT
@@ -119,28 +121,12 @@ class DeploymentsStatusUpdater(
         return shouldReportOnFinish
       }
 
-      private fun shouldCreateDeployment(build: SBuild): Boolean {
-        val isPartOfBuildChain = build.buildPromotion.isPartOfBuildChain
-        if (isPartOfBuildChain && build.buildPromotion.dependencies.isNotEmpty()) {
-          return false
-//          val dependencies = build.buildPromotion.dependencies
-//          println("deps: $dependencies")
-//          // TODO don't use `first()`, replace with config
-//          val associatedBuild = build.buildPromotion.dependencies.first().dependOn.associatedBuild
-//          if (associatedBuild is BaseBuild) {
-//            val deploymentId = associatedBuild.buildFinishParameters?.get("GITHUB_DEPLOYMENT_ID")
-//            println("deploymentId: $deploymentId from build ${associatedBuild.id}/${associatedBuild.buildTypeName}")
-//          }
-        }
-        return true
+      override fun runCreateDeployment(hash: RepositoryVersion, build: SBuild, environment: String): Deployment? {
+        return runDeploymentCreation(hash, build, "TeamCity build starting", DeploymentStatusState.pending, environment)
       }
 
       override fun scheduleChangeStarted(hash: RepositoryVersion, build: SBuild, environment: String) {
-        if (shouldCreateDeployment(build)) {
-          scheduleDeploymentCreation(hash, build, "TeamCity build started", DeploymentStatusState.pending, environment)
-        } else {
-          scheduleDeploymentStatusUpdate(hash, build, "TeamCity build started", DeploymentStatusState.pending, environment)
-        }
+        scheduleDeploymentStatusUpdate(hash, build, "TeamCity build started", DeploymentStatusState.in_progress, environment)
       }
 
       override fun scheduleChangeCompleted(hash: RepositoryVersion, build: SBuild, environment: String) {
@@ -199,61 +185,88 @@ class DeploymentsStatusUpdater(
         return version.version
       }
 
-      // TODO get deployment id from dependent build if part and not root of a build chain - or default to null
-      private fun findDeploymentId(sha: String, environment: String, build: SBuild): Long? {
-        val deployments = api.getDeployments(repositoryOwner, repositoryName, mapOf("sha" to sha, "environment" to environment)) ?: return null
-        deployments.forEach {
-          if (it.payload != null) {
-            val payload = moshi.adapter(Map::class.java).fromJson(it.payload as String)
-            if (payload?.get("buildIdAsString") == "" + build.buildId) {
-              return it.id
-            }
-          }
+      val DEPLOYMENT_ID_PARAM_KEY = "DEPLOYMENTS_PLUGIN_DEPLOYMENT_ID"
+
+      private fun getAssociatedBuild(build: SBuild): SBuild? {
+        return build.buildPromotion.allDependencies.find { it.associatedBuild?.parametersProvider?.all?.containsKey(DEPLOYMENT_ID_PARAM_KEY) ?: false }?.associatedBuild
+      }
+
+      private fun findDeploymentIdInAssociatedBuild(build: SBuild): Long? {
+        val associatedBuild = getAssociatedBuild(build)
+        if (associatedBuild != null) {
+          val param = associatedBuild.parametersProvider.get(DEPLOYMENT_ID_PARAM_KEY)
+          return param?.toLongOrNull()
         }
         return null
       }
 
-      private fun scheduleDeploymentCreation(
+      private fun hasBuildId(deployment: Deployment, buildId: Long): Boolean {
+        if (deployment.payload != null) {
+          try {
+            val payload = moshi.adapter(Map::class.java).fromJson(deployment.payload as String)
+            if (payload?.get(BUILD_ID_KEY) == "" + buildId) {
+              return true
+            }
+          } catch (e: Exception) {
+          }
+        }
+        return false
+      }
+
+      private fun findDeploymentIdInGitHubDeployments(sha: String, environment: String, build: SBuild): Long? {
+        val deployments = api.getDeployments(repositoryOwner, repositoryName, mapOf("sha" to sha, "environment" to environment)) ?: return null
+        return deployments.find { hasBuildId(it, build.buildId) }?.id
+      }
+
+      // TODO get deployment id from dependent build if part and not root of a build chain - or default to null
+      private fun findDeploymentId(sha: String, environment: String, build: SBuild): Long? {
+        val associatedBuildDeploymentId = findDeploymentIdInAssociatedBuild(build)
+        val gitHubDeploymentId = findDeploymentIdInGitHubDeployments(sha, environment, build)
+
+        println("deploymentIds: buildChain($associatedBuildDeploymentId)/gitHub($gitHubDeploymentId)")
+
+        // TODO instead of `gitHubDeploymentId`, use the `associatedBuildDeploymentId`
+        return gitHubDeploymentId
+      }
+
+      private fun runDeploymentCreation(
         version: RepositoryVersion,
         build: SBuild,
         message: String,
         status: DeploymentStatusState,
         environment: String
-      ) {
+      ): Deployment? {
         logger.info(
-          "Scheduling GitHub deployment for " +
+          "Creating GitHub deployment for " +
             "hash: " + version.version + ", " +
             "branch: " + version.vcsBranch + ", " +
             "buildId: " + build.buildId + ", " +
             "status: " + status
         )
-        executor.submit(ExceptionUtil.catchAll("create deployment on github", object : Runnable {
-
-          override fun run() {
-            val hash = resolveCommitHash(version, build, status)
-            val lock: Lock = publisher.getLocks()[publisher.getBuildType().externalId]
-            val problems: DeploymentsStatusPublisherProblems = publisher.getProblems()
-            val prMergeBranch = hash != version.version
-            lock.lock()
-            try {
-              try {
-                val deployment = api.createDeployment(
-                  repositoryOwner,
-                  repositoryName,
-                  DeploymentRequest(hash).apply {
-                    this.environment = environment
-                    this.payload = moshi.adapter(Map::class.java).toJson(mapOf("buildId" to build.buildId))
-                    this.description = "$message (${if (prMergeBranch) "$context - merge" else context})"
-                  })
-                logger.info("Created GitHub deployment ${deployment?.id} for hash: $hash, buildId: ${build.buildId}, status: $status")
-              } catch (e: IOException) {
-                problems.reportProblem(String.format("Deployments Status Publisher error. GitHub status: '%s'", status.toString()), publisher, LogUtil.describe(build), publisher.serverUrl, e, logger)
-              }
-            } finally {
-              lock.unlock()
-            }
+        val hash = resolveCommitHash(version, build, status)
+        val lock: Lock = publisher.getLocks()[publisher.getBuildType().externalId]
+        val problems: DeploymentsStatusPublisherProblems = publisher.getProblems()
+        val prMergeBranch = hash != version.version
+        lock.lock()
+        try {
+          try {
+            val deployment = api.createDeployment(
+              repositoryOwner,
+              repositoryName,
+              DeploymentRequest(hash).apply {
+                this.environment = environment
+                this.payload = moshi.adapter(Map::class.java).toJson(mapOf(BUILD_ID_KEY to build.buildId))
+                this.description = "$message (${if (prMergeBranch) "$context - merge" else context})"
+              })
+            logger.info("Created GitHub deployment ${deployment?.id} for hash: $hash, buildId: ${build.buildId}, status: $status")
+            return deployment
+          } catch (e: IOException) {
+            problems.reportProblem(String.format("Deployments Status Publisher error. GitHub status: '%s'", status.toString()), publisher, LogUtil.describe(build), publisher.serverUrl, e, logger)
+            return null
           }
-        }))
+        } finally {
+          lock.unlock()
+        }
       }
 
       private fun scheduleDeploymentStatusUpdate(
@@ -324,6 +337,7 @@ class DeploymentsStatusUpdater(
 
     fun shouldReportOnStart(): Boolean
     fun shouldReportOnFinish(): Boolean
+    fun runCreateDeployment(hash: RepositoryVersion, build: SBuild, environment: String): Deployment?
     fun scheduleChangeStarted(hash: RepositoryVersion, build: SBuild, environment: String)
     fun scheduleChangeCompleted(hash: RepositoryVersion, build: SBuild, environment: String)
   }

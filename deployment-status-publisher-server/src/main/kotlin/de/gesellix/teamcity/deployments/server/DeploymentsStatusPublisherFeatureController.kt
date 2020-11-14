@@ -34,7 +34,7 @@ class DeploymentsStatusPublisherFeatureController(
     controllerManager.registerController(resourceUrl, this)
   }
 
-  override fun doHandle(request: HttpServletRequest, response: HttpServletResponse): ModelAndView? {
+  override fun doHandle(request: HttpServletRequest, response: HttpServletResponse): ModelAndView {
     val props = request.getAttribute("propertiesBean") as BasePropertiesBean
     val publisherId = props.properties[PUBLISHER_ID_PARAM]
     val mv = publisherId?.let { createEditPublisherModel(it) } ?: createAddPublisherModel()
@@ -131,7 +131,7 @@ class DeploymentsStatusPublisherFeatureController(
     return buildTypeForm.project
   }
 
-  private fun getPublisherSettings(newPublisher: Boolean): List<DeploymentsStatusPublisherSettings>? {
+  private fun getPublisherSettings(newPublisher: Boolean): List<DeploymentsStatusPublisherSettings> {
     val publishers: MutableList<DeploymentsStatusPublisherSettings> = ArrayList(publisherManager.allPublisherSettings)
     if (newPublisher) {
       publishers.add(0, DummyPublisherSettings())

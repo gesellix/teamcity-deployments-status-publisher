@@ -33,6 +33,11 @@ abstract class DeploymentsStatusPublisherBase protected constructor(
   }
 
   @Throws(PublisherException::class)
+  override fun buildStarting(build: SRunningBuild, revision: BuildRevision): String? {
+    return null
+  }
+
+  @Throws(PublisherException::class)
   override fun buildStarted(build: SRunningBuild, revision: BuildRevision): Boolean {
     return false
   }

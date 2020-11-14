@@ -24,7 +24,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 
-import static de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisherListener.PUBLISHING_ENABLED_PROPERTY_NAME;
+import static de.gesellix.teamcity.deployments.server.DeploymentsStatusPublishingTaskRunnerKt.PUBLISHING_ENABLED_PROPERTY_NAME;
 import static jetbrains.buildServer.serverSide.BuildAttributes.COLLECT_CHANGES_ERROR;
 import static org.assertj.core.api.BDDAssertions.then;
 
@@ -40,8 +40,14 @@ public class DeploymentsStatusPublisherListenerTest extends DeploymentsStatusPub
     super.setUp();
     myLogger = new PublisherLogger();
     final PublisherManager myPublisherManager = new PublisherManager(Collections.<DeploymentsStatusPublisherSettings>singletonList(myPublisherSettings));
+    PublisherService publisherService = new PublisherService(myPublisherManager);
+    DeploymentsStatusPublishingTaskRunner taskRunner = new DeploymentsStatusPublishingTaskRunner(publisherService, myProblems);
     final BuildHistory history = myFixture.getHistory();
-    myListener = new DeploymentsStatusPublisherListener(EventDispatcher.create(BuildServerListener.class), myPublisherManager, history, myRBManager, myProblems);
+
+    myListener = new DeploymentsStatusPublisherListener(EventDispatcher.create(BuildServerListener.class),
+                                                        history,
+                                                        myRBManager,
+                                                        taskRunner);
     myPublisher = new MockPublisher(myPublisherSettings, MockPublisherSettings.PUBLISHER_ID, myBuildType, myFeatureDescriptor.getId(),
                                     Collections.<String, String>emptyMap(), myProblems, myLogger);
     myPublisherSettings.setPublisher(myPublisher);
@@ -166,7 +172,7 @@ public class DeploymentsStatusPublisherListenerTest extends DeploymentsStatusPub
     then(problems.size()).isEqualTo(1);
     SystemProblem problem = problems.iterator().next().getProblem();
     then(problem.getDescription());
-    then(problem.getDescription()).contains("Commit Status Publisher");
+    then(problem.getDescription()).contains("Deployments Status Publisher");
     then(problem.getDescription()).contains("buildFinished");
     then(problem.getDescription()).contains(MockPublisher.PUBLISHER_ERROR);
     then(problem.getDescription()).contains(myPublisher.getId());

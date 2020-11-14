@@ -5,10 +5,13 @@
   <bean id="problems" class="de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisherProblems"/>
   <bean id="deploymentsStatusPublisherBuildFeature" class="de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisherFeature"/>
   <bean id="deploymentsStatusPublisherListener" class="de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisherListener"/>
+  <bean id="deploymentInitiatingBuildStartContextProcessor" class="de.gesellix.teamcity.deployments.server.DeploymentInitiatingBuildStartContextProcessor"/>
   <bean id="publisherSettingsController" class="de.gesellix.teamcity.deployments.server.PublisherSettingsController"/>
   <bean class="de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisherFeatureController"/>
   <bean class="de.gesellix.teamcity.deployments.server.PublisherManager"/>
+  <bean class="de.gesellix.teamcity.deployments.server.PublisherService"/>
 
+  <bean class="de.gesellix.teamcity.deployments.server.DeploymentsStatusPublishingTaskRunner"/>
   <bean class="de.gesellix.teamcity.deployments.server.github.DeploymentsStatusUpdater"/>
   <bean class="de.gesellix.teamcity.deployments.server.github.api.impl.GitHubApiFactoryImpl"/>
   <bean class="de.gesellix.teamcity.deployments.server.github.GitHubSettings"/>
