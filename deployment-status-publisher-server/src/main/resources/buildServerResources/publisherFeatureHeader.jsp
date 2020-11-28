@@ -104,8 +104,29 @@
         </span>
     </c:if>
     <span class="error" id="error_${constants.vcsRootIdParam}"></span>
-    <span class="smallNote">Choose a repository to use for publishing a build status. Choose <strong>&lt;All attached VCS roots&gt;</strong> option if you want Commit Status Publisher to attempt
+    <span class="smallNote">Choose a repository to use for publishing a deployment status.
+        Choose <strong>&lt;All attached VCS roots&gt;</strong> option if you want Deployments Status Publisher to attempt
         publishing statuses for commits in all attached VCS roots.</span>
+  </td>
+</tr>
+<tr>
+  <th>
+    <label for="${constants.createDeploymentParam}">Create Deployment</label>
+  </th>
+  <td>
+    <props:checkboxProperty name="${constants.createDeploymentParam}"/>
+    <span class="error" id="error_${constants.createDeploymentParam}"></span>
+    <span class="smallNote">Choose whether this build should create a deployment
+        or if it should update the deployment status of another build in the build chain.</span>
+  </td>
+</tr>
+<tr>
+  <th>
+    <label for="${constants.targetEnvironmentParam}">Target Environment</label>
+  </th>
+  <td>
+    <props:textProperty name="${constants.targetEnvironmentParam}"/>
+    <span class="error" id="error_${constants.targetEnvironmentParam}"></span>
   </td>
 </tr>
 <tr>

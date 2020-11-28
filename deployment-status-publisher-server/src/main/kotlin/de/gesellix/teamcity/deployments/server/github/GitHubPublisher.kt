@@ -6,10 +6,11 @@ import de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisherProblem
 import de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisherSettings
 import de.gesellix.teamcity.deployments.server.GITHUB_CONTEXT
 import de.gesellix.teamcity.deployments.server.GITHUB_CUSTOM_CONTEXT_BUILD_PARAM
-import de.gesellix.teamcity.deployments.server.GITHUB_DEPLOYMENT_ENVIRONMENT
 import de.gesellix.teamcity.deployments.server.GITHUB_PUBLISHER_ID
 import de.gesellix.teamcity.deployments.server.GITHUB_SERVER
 import de.gesellix.teamcity.deployments.server.PublisherException
+import de.gesellix.teamcity.deployments.server.TARGET_ENVIRONMENT_DEFAULT
+import de.gesellix.teamcity.deployments.server.TARGET_ENVIRONMENT_PARAM
 import de.gesellix.teamcity.deployments.server.logger
 import jetbrains.buildServer.serverSide.BuildRevision
 import jetbrains.buildServer.serverSide.SBuild
@@ -76,7 +77,7 @@ class GitHubPublisher(
       logger.warn("No revisions were found to update GitHub status. Please check you have Git VCS roots in the build configuration")
       return null
     }
-    val environment = build.parametersProvider[GITHUB_DEPLOYMENT_ENVIRONMENT] ?: "production"
+    val environment = params[TARGET_ENVIRONMENT_PARAM] ?: TARGET_ENVIRONMENT_DEFAULT
     return h.runCreateDeployment(revision.repositoryVersion, build, environment)
   }
 
@@ -89,7 +90,7 @@ class GitHubPublisher(
       logger.warn("No revisions were found to update GitHub status. Please check you have Git VCS roots in the build configuration")
       return
     }
-    val environment = build.parametersProvider[GITHUB_DEPLOYMENT_ENVIRONMENT] ?: "production"
+    val environment = params[TARGET_ENVIRONMENT_PARAM] ?: TARGET_ENVIRONMENT_DEFAULT
     if (isStarting) {
       h.scheduleChangeStarted(revision.repositoryVersion, build, environment)
     } else {

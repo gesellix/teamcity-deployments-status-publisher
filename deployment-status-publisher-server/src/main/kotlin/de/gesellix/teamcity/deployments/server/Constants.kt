@@ -1,6 +1,10 @@
 package de.gesellix.teamcity.deployments.server
 
 const val PUBLISHER_ID_PARAM = "publisherId"
+const val CREATE_DEPLOYMENT_PARAM = "createDeployment"
+const val TARGET_ENVIRONMENT_PARAM = "targetEnvironment"
+const val TARGET_ENVIRONMENT_DEFAULT = "production"
+const val DEPLOYMENT_ID_PARAM_KEY = "DEPLOYMENTS_PLUGIN_DEPLOYMENT_ID"
 const val VCS_ROOT_ID_PARAM = "vcsRootId"
 const val DEPLOYMENTS_STATUS_PUBLISHER_PROBLEM_TYPE = "DEPLOYMENTS_STATUS_PUBLISHER_PROBLEM"
 const val TEST_CONNECTION_YES = "yes"
@@ -21,6 +25,12 @@ class Constants {
 
   val publisherIdParam: String
     get() = PUBLISHER_ID_PARAM
+
+  val createDeploymentParam: String
+    get() = CREATE_DEPLOYMENT_PARAM
+
+  val targetEnvironmentParam: String
+    get() = TARGET_ENVIRONMENT_PARAM
 
   val vcsRootIdParam: String
     get() = VCS_ROOT_ID_PARAM

@@ -83,6 +83,10 @@ abstract class DeploymentsStatusPublisherBase protected constructor(
     return params[VCS_ROOT_ID_PARAM]
   }
 
+  override fun isCreatingDeploymentEnabled(): Boolean {
+    return params[CREATE_DEPLOYMENT_PARAM] == "true"
+  }
+
   override fun getSettings(): DeploymentsStatusPublisherSettings {
     return settings
   }

@@ -96,7 +96,7 @@ public class GitHubPublisherTest extends HttpPublisherTest {
 
     myDeploymentsStatusUpdater = new DeploymentsStatusUpdater(myExecServices, new GitHubApiFactoryImpl(), myWebLinks);
 
-    myPublisherSettings = new GitHubSettings(myDeploymentsStatusUpdater, myExecServices, new MockPluginDescriptor(), myProblems,
+    myPublisherSettings = new GitHubSettings(myDeploymentsStatusUpdater, new MockPluginDescriptor(), myProblems,
                                              myOAuthConnectionsManager, myOAuthTokenStorage, myFixture.getSecurityContext());
     myPublisher = new GitHubPublisher(myPublisherSettings, myBuildType, FEATURE_ID, myDeploymentsStatusUpdater, params, myProblems);
   }
