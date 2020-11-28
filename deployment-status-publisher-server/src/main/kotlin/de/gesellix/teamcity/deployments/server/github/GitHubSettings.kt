@@ -20,7 +20,6 @@ import jetbrains.buildServer.serverSide.PropertiesProcessor
 import jetbrains.buildServer.serverSide.SBuildType
 import jetbrains.buildServer.serverSide.SProject
 import jetbrains.buildServer.serverSide.auth.SecurityContext
-import jetbrains.buildServer.serverSide.executors.ExecutorServices
 import jetbrains.buildServer.serverSide.oauth.OAuthConnectionDescriptor
 import jetbrains.buildServer.serverSide.oauth.OAuthConnectionsManager
 import jetbrains.buildServer.serverSide.oauth.OAuthTokensStorage
@@ -38,14 +37,13 @@ import kotlin.collections.set
 
 class GitHubSettings(
   private val deploymentsStatusUpdater: DeploymentsStatusUpdater,
-  executorServices: ExecutorServices,
   descriptor: PluginDescriptor,
   problems: DeploymentsStatusPublisherProblems,
   private val oauthConnectionsManager: OAuthConnectionsManager,
   private val oauthTokensStorage: OAuthTokensStorage,
   private val securityContext: SecurityContext
 ) :
-  DeploymentsStatusPublisherSettingsBase(executorServices, descriptor, problems) {
+  DeploymentsStatusPublisherSettingsBase(descriptor, problems) {
 
   private val supportedEvents: Set<DeploymentsStatusPublisher.Event> = object : HashSet<DeploymentsStatusPublisher.Event>() {
     init {

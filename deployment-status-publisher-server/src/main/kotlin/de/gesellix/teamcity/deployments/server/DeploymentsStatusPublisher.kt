@@ -43,6 +43,8 @@ interface DeploymentsStatusPublisher {
 
   fun getVcsRootId(): String?
 
+  fun isCreatingDeploymentEnabled(): Boolean
+
   override fun toString(): String
 
   val id: String

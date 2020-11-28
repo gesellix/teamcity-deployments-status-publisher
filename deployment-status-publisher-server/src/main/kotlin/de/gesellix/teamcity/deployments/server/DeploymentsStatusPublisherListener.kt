@@ -34,7 +34,7 @@ class DeploymentsStatusPublisherListener(
 
   private val util = Util()
 
-  override fun changesLoaded(build: SRunningBuild) {
+  override fun buildStarted(build: SRunningBuild) {
     val buildType = util.getBuildType(STARTED, build) ?: return
     taskRunner.runForEveryPublisher(STARTED, buildType, build, object : PublishTask {
       @Throws(PublisherException::class)
@@ -85,8 +85,8 @@ class DeploymentsStatusPublisherListener(
   }
 
   override fun buildChangedStatus(build: SRunningBuild, oldStatus: Status, newStatus: Status) {
-    if (oldStatus.isFailed || !newStatus.isFailed) // we are supposed to report failures only
-    {
+    // we are supposed to report failures only
+    if (oldStatus.isFailed || !newStatus.isFailed) {
       return
     }
     val buildType = util.getBuildType(FAILURE_DETECTED, build) ?: return

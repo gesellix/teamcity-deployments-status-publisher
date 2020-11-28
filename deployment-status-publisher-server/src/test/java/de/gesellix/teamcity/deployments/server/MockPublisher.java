@@ -74,6 +74,11 @@ class MockPublisher extends DeploymentsStatusPublisherBase implements Deployment
     return myVcsRootId;
   }
 
+  @Override
+  public boolean isCreatingDeploymentEnabled() {
+    return false;
+  }
+
   void setVcsRootId(String vcsRootId) {
     myVcsRootId = vcsRootId;
   }
