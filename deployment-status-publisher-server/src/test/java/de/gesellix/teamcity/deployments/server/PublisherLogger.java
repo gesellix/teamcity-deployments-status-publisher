@@ -6,9 +6,6 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.Stack;
 
-/**
- * @author anton.zamolotskikh, 20/02/17.
- */
 class PublisherLogger extends Logger {
 
   private Stack<String> entries = new Stack<String>();

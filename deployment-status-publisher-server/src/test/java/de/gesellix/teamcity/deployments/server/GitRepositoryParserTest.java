@@ -10,7 +10,6 @@ import java.util.Map;
 
 import static org.assertj.core.api.BDDAssertions.then;
 
-@SuppressWarnings("ConstantConditions")
 @Test
 public class GitRepositoryParserTest {
 

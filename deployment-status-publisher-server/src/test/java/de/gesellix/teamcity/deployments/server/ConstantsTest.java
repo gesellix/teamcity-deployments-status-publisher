@@ -8,7 +8,6 @@ import java.util.Map;
 
 import static org.testng.AssertJUnit.fail;
 
-@SuppressWarnings("Convert2Diamond")
 @Test
 public class ConstantsTest {
 

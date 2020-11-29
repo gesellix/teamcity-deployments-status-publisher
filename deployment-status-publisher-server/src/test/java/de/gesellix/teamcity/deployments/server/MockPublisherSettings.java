@@ -8,9 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author anton.zamolotskikh, 13/02/17.
- */
 public class MockPublisherSettings extends DummyPublisherSettings {
 
   static final String PUBLISHER_ID = "MockPublisherId";

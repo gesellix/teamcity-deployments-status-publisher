@@ -31,9 +31,6 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.BDDAssertions.then;
 
-/**
- * @author anton.zamolotskikh, 05/10/16.
- */
 @Test
 public abstract class DeploymentsStatusPublisherTest extends BaseServerTestCase {
 
