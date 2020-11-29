@@ -1,12 +1,18 @@
 # Deployments Status Publisher
 
-A TeamCity plugin to publish deployment status updates to an external system.
+A TeamCity [Build Feature](https://www.jetbrains.com/help/teamcity/adding-build-features.html) to publish deployment status updates to an external system.
+We currently only support [GitHub's deployment api](https://docs.github.com/en/free-pro-team@latest/rest/reference/repos#deployments).  
 
 Based on the [Gradle TeamCity plugin](https://github.com/rodm/gradle-teamcity-plugin) and the [Teamcity Commit Status Publisher](https://github.com/JetBrains/commit-status-publisher).
 
 Releases are available at Jetbrains' Marktplace: [plugins.jetbrains.com/plugin/15475-deployments-status-publisher](https://plugins.jetbrains.com/plugin/15475-deployments-status-publisher).
 
 Target TeamCity version is 2017.2, but should work in more recent versions, too.
+
+## Usage
+
+After [installing the plugin](https://www.jetbrains.com/help/teamcity/installing-additional-plugins.html),
+add the Deployments Status Publisher to your build configuration.
 
 ## Developing/Testing locally
 
@@ -15,9 +21,44 @@ Target TeamCity version is 2017.2, but should work in more recent versions, too.
 docker-compose up
 ```
 
+## TeamCity's role in a deployment
+
+We're referring to [GitHub's deployment sequence diagram](https://docs.github.com/en/free-pro-team@latest/rest/reference/repos#deployments)
+shown below to describe the role of the Deployments Status Publisher:
+
+```
++---------+             +--------+            +-----------+        +-------------+
+| Tooling |             | GitHub |            | 3rd Party |        | Your Server |
++---------+             +--------+            +-----------+        +-------------+
+     |                      |                       |                     |
+     |  Create Deployment   |                       |                     |
+     |--------------------->|                       |                     |
+     |                      |                       |                     |
+     |  Deployment Created  |                       |                     |
+     |<---------------------|                       |                     |
+     |                      |                       |                     |
+     |                      |   Deployment Event    |                     |
+     |                      |---------------------->|                     |
+     |                      |                       |     SSH+Deploys     |
+     |                      |                       |-------------------->|
+     |                      |                       |                     |
+     |                      |   Deployment Status   |                     |
+     |                      |<----------------------|                     |
+     |                      |                       |                     |
+     |                      |                       |   Deploy Completed  |
+     |                      |                       |<--------------------|
+     |                      |                       |                     |
+     |                      |   Deployment Status   |                     |
+     |                      |<----------------------|                     |
+     |                      |                       |                     |
+```
+
+TeamCity with the enabled Deployments Status Publilsher acts a `Tooling` and `3rd Party` as well,
+with the exception that GitHub won't notify TeamCity for any `Deployment Event`.
+
 ## Example
 
-An example deployment with two build configs in a build chain can create a deployment like below.
+An example deployment with two build configs in a build chain can create a deployment like below (taken from GitHub's api).
 Build "Step 1 (example)" is enabled to create (initialize) the deployment and use the `ci` environment.
 Build "Step 2 (example)" uses the deployment-id of the previous build and the default `production` environment.
 
