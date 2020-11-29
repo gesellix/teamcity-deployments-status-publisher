@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "de.gesellix"
-version = "0.1"
+version = findProperty("plugin.version") ?: "SNAPSHOT"
 
 //extra["teamcityVersion"] = findProperty("teamcity.version") ?: "2020.1"
 //extra["teamcityVersion"] = findProperty("teamcity.version") ?: "2019.2"

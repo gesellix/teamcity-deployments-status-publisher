@@ -6,9 +6,6 @@ plugins {
   id("com.github.rodm.teamcity-environments")
 }
 
-val pluginVersion = project.findProperty("PluginVersion") ?: "SNAPSHOT"
-version = pluginVersion
-
 val teamcityVersion = rootProject.extra["teamcityVersion"] as String
 
 //val agent = configurations.getByName("agent")
@@ -56,7 +53,6 @@ dependencies {
     )
   }
 }
-
 
 val compileKotlin: KotlinCompile by tasks
 compileKotlin.kotlinOptions {
@@ -141,7 +137,7 @@ teamcity {
 //    tokens = mapOf("Version" to pluginVersion)
     descriptor {
       name = pluginName
-      displayName = "Deployments Status TeamCity Plugin"
+      displayName = "Deployments Status Publisher"
       version = rootProject.version as String?
       vendorName = "gesellix"
       vendorUrl = "https://www.gesellix.net"
@@ -154,6 +150,11 @@ teamcity {
 //        from("src/kotlin-dsl")
 //      }
 //    }
+    publish {
+      setChannels(listOf("beta"))
+      setToken(file("$rootDir/.jetbrains-hub-token").readText().trim())
+      setNotes("automated publish")
+    }
   }
 
   environments {
