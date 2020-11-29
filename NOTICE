@@ -1,0 +1,6 @@
+This project is heavily based on Jetbrains' Commit Status Publisher plugin
+at https://github.com/JetBrains/commit-status-publisher starting with
+revision https://github.com/JetBrains/commit-status-publisher/commit/3b05e3b3a36b5375c5c785ff6c316f01aeaa9093.
+The source code has been heavily modified, so we decided to update the license headers.
+Please note that credits go to the original authors for the source code and architecture
+still being used in this project.

@@ -29,9 +29,6 @@ import static de.gesellix.teamcity.deployments.server.ConstantsKt.GITHUB_SERVER;
 import static de.gesellix.teamcity.deployments.server.ConstantsKt.GITHUB_TOKEN;
 import static org.assertj.core.api.BDDAssertions.then;
 
-/**
- * @author anton.zamolotskikh, 05/10/16.
- */
 @Test
 public class GitHubPublisherTest extends HttpPublisherTest {
 

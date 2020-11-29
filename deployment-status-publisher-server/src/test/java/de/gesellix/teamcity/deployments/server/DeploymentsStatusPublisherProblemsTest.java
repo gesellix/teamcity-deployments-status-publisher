@@ -11,10 +11,6 @@ import java.util.Collections;
 
 import static org.assertj.core.api.BDDAssertions.then;
 
-/**
- * @author anton.zamolotskikh, 13/09/16.
- */
-
 @Test
 public class DeploymentsStatusPublisherProblemsTest extends BaseServerTestCase {
 

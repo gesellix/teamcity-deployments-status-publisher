@@ -41,9 +41,6 @@ import java.util.Map;
 import static de.gesellix.teamcity.deployments.common.DeploymentsStatusPublisherBuildFeature.BUILD_FEATURE_NAME;
 import static de.gesellix.teamcity.deployments.server.ConstantsKt.PUBLISHER_ID_PARAM;
 
-/**
- * @author anton.zamolotskikh, 15/09/16.
- */
 public class DeploymentsStatusPublisherTestBase extends BaseServerTestCase {
 
   protected PublisherSettingsController mySettingsController;
