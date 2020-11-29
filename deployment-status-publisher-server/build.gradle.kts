@@ -150,10 +150,13 @@ teamcity {
 //        from("src/kotlin-dsl")
 //      }
 //    }
-    publish {
-      setChannels(listOf("beta"))
-      setToken(file("$rootDir/.jetbrains-hub-token").readText().trim())
-      setNotes("automated publish")
+    val jetbrainsHubToken = file("$rootDir/.jetbrains-hub-token").readText().trim()
+    if (jetbrainsHubToken.isNotEmpty()) {
+      publish {
+        setChannels(listOf("beta"))
+        setToken(jetbrainsHubToken)
+        setNotes("automated publish")
+      }
     }
   }
 
