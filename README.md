@@ -1,9 +1,10 @@
-# Deployments TeamCity Plugin
+# Deployments Status Publisher
 
-Based on the [Gradle TeamCity plugin](https://github.com/rodm/gradle-teamcity-plugin) with
-a lot of inspiration from [Teamcity Commit Status Publisher](https://github.com/JetBrains/commit-status-publisher).
+A TeamCity plugin to publish deployment status updates to an external system.
 
-Releases are available at Jetbrains' Marktplace: https://plugins.jetbrains.com/plugin/15475-deployments-status-publisher
+Based on the [Gradle TeamCity plugin](https://github.com/rodm/gradle-teamcity-plugin) and the [Teamcity Commit Status Publisher](https://github.com/JetBrains/commit-status-publisher).
+
+Releases are available at Jetbrains' Marktplace: [plugins.jetbrains.com/plugin/15475-deployments-status-publisher](https://plugins.jetbrains.com/plugin/15475-deployments-status-publisher).
 
 Target TeamCity version is 2017.2, but should work in more recent versions, too.
 
@@ -131,3 +132,8 @@ Build "Step 2 (example)" uses the deployment-id of the previous build and the de
   }
 }
 ```
+
+## License and Notice
+
+This work is licensed under the [MIT License](https://opensource.org/licenses/MIT), see the `LICENSE` file.
+Please note that this project is heavily based on Jetbrains' [Commit Status Publisher plugin](https://github.com/JetBrains/commit-status-publisher). See the `NOTICE` file for details.
