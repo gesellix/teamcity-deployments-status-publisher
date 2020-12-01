@@ -7,12 +7,16 @@ Based on the [Gradle TeamCity plugin](https://github.com/rodm/gradle-teamcity-pl
 
 Releases are available at Jetbrains' Marktplace: [plugins.jetbrains.com/plugin/15475-deployments-status-publisher](https://plugins.jetbrains.com/plugin/15475-deployments-status-publisher).
 
-Target TeamCity version is 2017.2, but should work in more recent versions, too.
+We're currently developing for TeamCity version 2017.2, but it should work in more recent versions, too.
 
 ## Usage
 
 After [installing the plugin](https://www.jetbrains.com/help/teamcity/installing-additional-plugins.html),
 add the Deployments Status Publisher to your build configuration.
+
+When a build ist started or finished, the Deployments Status Publisher will send status updates
+to GitHub's deployment api. If builds are part of a build chain, they may share a common `deploymentId`
+and can be distinguished by configuring different target environments. The default environment is _production_.
 
 ## Developing/Testing locally
 
