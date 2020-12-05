@@ -7,7 +7,6 @@ import de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisher.Event.
 import de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisher.Event.MARKED_AS_SUCCESSFUL
 import de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisher.Event.QUEUED
 import de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisher.Event.REMOVED_FROM_QUEUE
-import de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisher.Event.STARTED
 import de.gesellix.teamcity.deployments.server.common.Util
 import jetbrains.buildServer.BuildProblemData
 import jetbrains.buildServer.messages.Status
@@ -34,15 +33,21 @@ class DeploymentsStatusPublisherListener(
 
   private val util = Util()
 
-  override fun buildStarted(build: SRunningBuild) {
-    val buildType = util.getBuildType(STARTED, build) ?: return
-    taskRunner.runForEveryPublisher(STARTED, buildType, build, object : PublishTask {
-      @Throws(PublisherException::class)
-      override fun run(publisher: DeploymentsStatusPublisher, revision: BuildRevision): Boolean {
-        return publisher.buildStarted(build, revision)
-      }
-    })
-  }
+// TODO Remove or fix.
+// This event happens before BuildStartContextProcessor::updateParameters.
+// See https://youtrack.jetbrains.com/issue/TW-68592 for details.
+//  override fun buildStarted(build: SRunningBuild) {
+//    val buildType = util.getBuildType(STARTED, build) ?: return
+//    taskRunner.runForEveryPublisher(STARTED, buildType, build, object : PublishTask {
+//      @Throws(PublisherException::class)
+//      override fun run(publisher: DeploymentsStatusPublisher, revision: BuildRevision): Boolean {
+//        return publisher.buildStarted(build, revision)
+//      }
+//    })
+//  }
+//  override fun changesLoaded(@NotNull build: SRunningBuild) {
+//    logger.info("## changesLoaded: $build")
+//  }
 
   override fun buildFinished(build: SRunningBuild) {
     val buildType = util.getBuildType(FINISHED, build) ?: return

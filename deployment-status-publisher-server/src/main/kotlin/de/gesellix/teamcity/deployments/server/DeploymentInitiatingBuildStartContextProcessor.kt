@@ -25,7 +25,7 @@ class DeploymentInitiatingBuildStartContextProcessor(
           // TODO: if (!deployment) {addProblem()}
           context.addSharedParameter(DEPLOYMENT_ID_PARAM_KEY, result ?: "")
         }
-        return true
+        return publisher.buildStarted(context.build, revision)
       }
     })
   }
