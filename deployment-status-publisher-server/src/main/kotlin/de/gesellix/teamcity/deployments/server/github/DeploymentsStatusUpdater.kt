@@ -169,15 +169,6 @@ class DeploymentsStatusUpdater(
         return build.buildPromotion.allDependencies.find { it.associatedBuild?.parametersProvider?.all?.containsKey(DEPLOYMENT_ID_PARAM_KEY) ?: false }?.associatedBuild
       }
 
-      private fun findDeploymentIdInAssociatedBuild(build: SBuild): Long? {
-        val associatedBuild = getAssociatedBuild(build)
-        if (associatedBuild != null) {
-          val param = associatedBuild.parametersProvider.get(DEPLOYMENT_ID_PARAM_KEY)
-          return param?.toLongOrNull()
-        }
-        return null
-      }
-
       private fun findDeploymentIdInParameters(build: SBuild): Long? {
         val param = build.parametersProvider.get(DEPLOYMENT_ID_PARAM_KEY)
         return param?.toLongOrNull()
@@ -196,20 +187,26 @@ class DeploymentsStatusUpdater(
         return false
       }
 
-      private fun findDeploymentIdInGitHubDeployments(sha: String, environment: String, build: SBuild): Long? {
-        val deployments = api.getDeployments(repositoryOwner, repositoryName, mapOf("sha" to sha, "environment" to environment)) ?: return null
+      private fun findDeploymentIdInGitHubDeployments(sha: String, build: SBuild): Long? {
+        val deployments = api.getDeployments(repositoryOwner, repositoryName, mapOf("sha" to sha)) ?: return null
         return deployments.find { hasBuildId(it, build.buildId) }?.id
       }
 
-      // TODO get deployment id from dependent build if part and not root of a build chain - or default to null
-      private fun findDeploymentId(sha: String, environment: String, build: SBuild): Long? {
+      private fun findDeploymentId(sha: String, build: SBuild): Long? {
         val ownDeploymentId = findDeploymentIdInParameters(build)
-        val associatedBuildDeploymentId = findDeploymentIdInAssociatedBuild(build)
-        // TODO use associatedBuild
-        val gitHubDeploymentId = findDeploymentIdInGitHubDeployments(sha, environment, build)
+        val ownGitHubDeploymentId = findDeploymentIdInGitHubDeployments(sha, build)
 
-        logger.info("deploymentIds: own($ownDeploymentId)/buildChain($associatedBuildDeploymentId)/gitHub($gitHubDeploymentId)")
-        return ownDeploymentId ?: associatedBuildDeploymentId ?: gitHubDeploymentId
+        val associatedBuild = getAssociatedBuild(build)
+        var associatedBuildDeploymentId: Long? = null
+        var associatedGitHubDeploymentId: Long? = null
+        logger.debug("associatedBuild: $associatedBuild")
+        if (associatedBuild != null) {
+          associatedBuildDeploymentId = findDeploymentIdInParameters(associatedBuild)
+          associatedGitHubDeploymentId = findDeploymentIdInGitHubDeployments(sha, associatedBuild)
+        }
+
+        logger.debug("deploymentIds: own($ownDeploymentId)/associated($associatedBuildDeploymentId)/gitHubOwn($ownGitHubDeploymentId)/githubAssociated($associatedGitHubDeploymentId)")
+        return ownDeploymentId ?: associatedBuildDeploymentId ?: ownGitHubDeploymentId ?: associatedGitHubDeploymentId
       }
 
       private fun runDeploymentCreation(
@@ -277,7 +274,7 @@ class DeploymentsStatusUpdater(
             val url: String
             try {
               try {
-                var deploymentId: Long? = findDeploymentId(hash, environment, build)
+                var deploymentId: Long? = findDeploymentId(hash, build)
                 if (deploymentId == null) {
                   problems.reportProblem(
                     "Deployments Status Publisher error. DeploymentId not found for hash: $hash, environment: $environment, build: ${LogUtil.describe(build)}",
