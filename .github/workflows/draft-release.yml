@@ -1,5 +1,5 @@
 ---
-name: Release Drafter
+name: Update Release Draft
 on:
   push:
     branches:
