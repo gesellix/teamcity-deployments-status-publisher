@@ -53,11 +53,11 @@ public class DeploymentsStatusPublisherListenerTest extends DeploymentsStatusPub
     myPublisherSettings.setPublisher(myPublisher);
   }
 
-  public void should_publish_started() {
+  public void should_NOT_publish_started() {
     prepareVcs();
     SRunningBuild runningBuild = myFixture.startBuild(myBuildType);
     myListener.buildStarted(runningBuild);
-    then(myPublisher.isStartedReceived()).isTrue();
+    then(myPublisher.isStartedReceived()).isFalse();
   }
 
   public void should_publish_commented() {
