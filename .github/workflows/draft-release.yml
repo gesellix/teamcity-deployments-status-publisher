@@ -24,7 +24,7 @@ jobs:
           hasChanged=$(git diff --quiet gradle.properties)
           echo "::set-output name=has-changes::${hasChanged}"
       - name: Commit updated gradle.properties
-        if: ${ steps.prepare-version.outputs.has-changes == "1" }
+        if: ${{ steps.prepare-version.outputs.has-changes == "1" }}
         run: |
           tagName=${{ steps.create_release.outputs.tag_name }}
           git config user.name "GitHub Actions"
@@ -34,7 +34,7 @@ jobs:
           git commit --message "Prepare release ${tagName}"
           git push origin prepare-release/${tagName}
       - name: Create pull request into main
-        if: ${ steps.prepare-version.outputs.has-changes == "1" }
+        if: ${{ steps.prepare-version.outputs.has-changes == "1" }}
         uses: thomaseizinger/create-pull-request@1.0.0
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
