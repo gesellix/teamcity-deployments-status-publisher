@@ -1,6 +1,5 @@
 package de.gesellix.teamcity.deployments.server
 
-import de.gesellix.teamcity.deployments.common.DeploymentsStatusPublisherBuildFeature.BUILD_FEATURE_NAME
 import jetbrains.buildServer.serverSide.BuildFeature
 import jetbrains.buildServer.serverSide.InvalidProperty
 import jetbrains.buildServer.serverSide.PropertiesProcessor
@@ -10,6 +9,11 @@ class DeploymentsStatusPublisherFeature(
   private val controller: DeploymentsStatusPublisherFeatureController,
   private val publisherManager: PublisherManager
 ) : BuildFeature() {
+
+  companion object {
+
+    const val BUILD_FEATURE_NAME = "deployments-status-publisher"
+  }
 
   override fun getType(): String {
     return BUILD_FEATURE_NAME

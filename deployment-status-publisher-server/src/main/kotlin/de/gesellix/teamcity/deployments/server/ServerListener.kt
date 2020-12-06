@@ -1,6 +1,6 @@
 package de.gesellix.teamcity.deployments.server
 
-import de.gesellix.teamcity.deployments.common.DeploymentsStatusPublisherBuildFeature
+import de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisherFeature.Companion.BUILD_FEATURE_NAME
 import jetbrains.buildServer.serverSide.BuildTypeSettings
 import jetbrains.buildServer.serverSide.ConfigAction
 import jetbrains.buildServer.serverSide.ConfigActionsServerAdapter
@@ -43,10 +43,9 @@ class ServerListener(dispatcher: EventDispatcher<ConfigActionsServerListener?>) 
 
     private fun updateFeatures(oldExternalId: String, oldInternalId: Long?, newExternalId: String, btSettings: BuildTypeSettings): Boolean {
       var updated = false
-      for (bf in btSettings.getBuildFeaturesOfType(DeploymentsStatusPublisherBuildFeature.BUILD_FEATURE_NAME)) {
+      for (bf in btSettings.getBuildFeaturesOfType(BUILD_FEATURE_NAME)) {
         val vcsRootId = bf.parameters[VCS_ROOT_ID_PARAM]
-        var internalId: Long?
-        internalId = try {
+        val internalId: Long? = try {
           java.lang.Long.valueOf(vcsRootId)
         } catch (ex: NumberFormatException) {
           null

@@ -17,7 +17,6 @@ class DeploymentsStatusPublishingTaskRunner(
   private val problems: DeploymentsStatusPublisherProblems
 ) {
 
-
   private val logger by logger(DeploymentsStatusPublishingTaskRunner::class.java.name)
 
   private fun isPublishingDisabled(buildType: SBuildType): Boolean {

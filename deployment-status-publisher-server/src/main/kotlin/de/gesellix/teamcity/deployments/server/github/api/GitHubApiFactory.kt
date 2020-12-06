@@ -8,7 +8,7 @@ interface GitHubApiFactory {
   fun openGitHubForToken(
     url: String,
     token: String,
-    timeout: Timeout=Timeout(10, TimeUnit.SECONDS)
+    timeout: Timeout = Timeout(10, TimeUnit.SECONDS)
   ): GitHubApi
 
   companion object {
