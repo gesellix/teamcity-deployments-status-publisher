@@ -1,9 +1,9 @@
 ---
 name: Release
 on:
-  push:
-    tags:
-      - 'v*'
+  release:
+    types:
+      - released
 
 jobs:
   release:
@@ -16,6 +16,13 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 1.8
-      - name: Publish
-        run: ./gradlew clean build --no-daemon --info --stacktrace
+      - name: Publish to GitHub Packages
+        run: ./gradlew clean build publishAllPublicationsToGitHubPackagesRepository --no-daemon --info --stacktrace
+        env:
+          PACKAGE_REGISTRY_USER: ${GITHUB_ACTOR}
+          PACKAGE_REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#      - name: Publish to Jetbrains Marketplace
+#        run: ./gradlew clean build publishAllPublicationsToGitHubPackagesRepository -x check --no-daemon --info --stacktrace
+#        env:
+#          JETBRAINS_TOKEN: ${{ secrets.JETBRAINS_TOKEN }}
 ...
