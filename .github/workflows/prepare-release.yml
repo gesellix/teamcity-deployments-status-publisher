@@ -1,0 +1,39 @@
+---
+name: Release
+on:
+  release:
+    types:
+      - created
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Unshallow
+        run: git fetch --prune --tags --unshallow -f
+      - name: Prepare next version
+        run: |
+          sed -i.bak "s/^version=.*/version=${GITHUB_REF#"v"}/g" gradle.properties
+      - name: Commit updated gradle.properties
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email noreply@github.com
+          git checkout -b prepare-release/${GITHUB_REF}
+          git add gradle.properties
+          git commit --message "Prepare release ${GITHUB_REF}"
+          echo "::set-output name=commit::$(git rev-parse HEAD)"
+          git push origin prepare-release/${GITHUB_REF}
+      - name: Create pull request into main
+        uses: thomaseizinger/create-pull-request@1.0.0
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          head: prepare-release/${GITHUB_REF}
+          base: main
+          title: Update project version to ${GITHUB_REF}
+          reviewers: gesellix
+          body: |
+            Hi!
+            Please keep your project version and Git tags in sync.
+            I've updated the version just in case you forgot about it.
+...
