@@ -4,6 +4,7 @@ plugins {
   kotlin("jvm")
   id("com.github.rodm.teamcity-server")
   id("com.github.rodm.teamcity-environments")
+  id("maven-publish")
 }
 
 val teamcityVersion = rootProject.extra["teamcityVersion"] as String
@@ -142,8 +143,8 @@ teamcity {
 //    }
     publish {
       setChannels(listOf("beta"))
-      setToken(findProperty("jetbrains.token") as String)
-      setNotes("automated publish")
+      setToken(System.getenv("JETBRAINS_TOKEN") ?: findProperty("jetbrains.token") as String)
+      setNotes(findProperty("publish.notes") as String)
     }
   }
 
@@ -155,6 +156,26 @@ teamcity {
 //      javaHome = file(extra["java8Home"] as String)
 //      serverOptions ("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005")
 //      agentOptions ("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5006")
+    }
+  }
+}
+
+val sourcesJar by tasks.registering(Jar::class) {
+  dependsOn("classes")
+  archiveClassifier.set("sources")
+  from(sourceSets.main.get().allSource)
+}
+
+artifacts {
+  add("archives", sourcesJar.get())
+}
+
+configure<PublishingExtension> {
+  publications {
+    register("lib", MavenPublication::class) {
+      from(components["java"])
+      artifact(sourcesJar.get())
+      artifactId = "teamcity-deployments-${project.name}"
     }
   }
 }

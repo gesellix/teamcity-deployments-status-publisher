@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
   kotlin("jvm")
   kotlin("kapt")
+  id("maven-publish")
 }
 
 dependencies {
@@ -27,3 +28,23 @@ compileKotlin.kotlinOptions {
 
 val test: Test by tasks
 test.useJUnitPlatform()
+
+val sourcesJar by tasks.registering(Jar::class) {
+  dependsOn("classes")
+  archiveClassifier.set("sources")
+  from(sourceSets.main.get().allSource)
+}
+
+artifacts {
+  add("archives", sourcesJar.get())
+}
+
+configure<PublishingExtension> {
+  publications {
+    register("lib", MavenPublication::class) {
+      from(components["java"])
+      artifact(sourcesJar.get())
+      artifactId = "teamcity-deployments-${project.name}"
+    }
+  }
+}

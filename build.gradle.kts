@@ -5,9 +5,7 @@ plugins {
   id("com.github.rodm.teamcity-environments") version "1.3.2" apply false
 }
 
-group = "de.gesellix"
-version = findProperty("plugin.version") ?: "SNAPSHOT"
-extra["teamcityVersion"] = findProperty("teamcity.version") ?: "2017.2"
+extra["teamcityVersion"] = findProperty("teamcity.version")
 
 allprojects {
   repositories {
@@ -53,6 +51,22 @@ allprojects {
           }
         }
         cacheDynamicVersionsFor(0, "seconds")
+      }
+    }
+  }
+}
+
+subprojects {
+  apply(plugin = "maven-publish")
+  configure<PublishingExtension> {
+    repositories {
+      maven {
+        name = "GitHubPackages"
+        url = uri("https://maven.pkg.github.com/${property("github.package-registry.owner")}/${property("github.package-registry.repository")}")
+        credentials {
+          username = System.getenv("PACKAGE_REGISTRY_USER") ?: findProperty("github.package-registry.username") as String
+          password = System.getenv("PACKAGE_REGISTRY_TOKEN") ?: findProperty("github.package-registry.password") as String
+        }
       }
     }
   }
