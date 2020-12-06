@@ -21,8 +21,9 @@ jobs:
         run: |
           tagName=${{ steps.create_release.outputs.tag_name }}
           sed -i.bak "s/^version=.*/version=${tagName#"v"}/g" gradle.properties
-          hasChanged=$(git diff --quiet gradle.properties)
-          echo "::set-output name=has-changes::${hasChanged}"
+          git diff --quiet gradle.properties
+          hasChanges=$?
+          echo "::set-output name=has-changes::${hasChanges}"
       - name: Commit updated gradle.properties
         if: ${{ steps.prepare-version.outputs.has-changes == 1 }}
         run: |
