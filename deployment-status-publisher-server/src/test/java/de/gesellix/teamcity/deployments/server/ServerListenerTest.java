@@ -16,8 +16,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-import static de.gesellix.teamcity.deployments.common.DeploymentsStatusPublisherBuildFeature.BUILD_FEATURE_NAME;
 import static de.gesellix.teamcity.deployments.server.ConstantsKt.VCS_ROOT_ID_PARAM;
+import static de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisherFeature.BUILD_FEATURE_NAME;
 
 @Test
 public class ServerListenerTest extends BaseServerTestCase {

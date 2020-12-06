@@ -38,8 +38,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static de.gesellix.teamcity.deployments.common.DeploymentsStatusPublisherBuildFeature.BUILD_FEATURE_NAME;
 import static de.gesellix.teamcity.deployments.server.ConstantsKt.PUBLISHER_ID_PARAM;
+import static de.gesellix.teamcity.deployments.server.DeploymentsStatusPublisherFeature.BUILD_FEATURE_NAME;
 
 public class DeploymentsStatusPublisherTestBase extends BaseServerTestCase {
 
