@@ -21,8 +21,8 @@ jobs:
         env:
           PACKAGE_REGISTRY_USER: ${GITHUB_ACTOR}
           PACKAGE_REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#      - name: Publish to Jetbrains Marketplace
-#        run: ./gradlew clean build publishAllPublicationsToGitHubPackagesRepository -x check --no-daemon --info --stacktrace
-#        env:
-#          JETBRAINS_TOKEN: ${{ secrets.JETBRAINS_TOKEN }}
+      - name: Publish to Jetbrains Marketplace
+        run: ./gradlew clean build publishPlugin -x check --no-daemon --info --stacktrace
+        env:
+          JETBRAINS_TOKEN: ${{ secrets.JETBRAINS_TOKEN }}
 ...
