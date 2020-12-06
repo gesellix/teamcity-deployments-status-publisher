@@ -9,7 +9,41 @@ jobs:
   update_release_draft:
     runs-on: ubuntu-latest
     steps:
-      - uses: release-drafter/release-drafter@v5
+      - id: create_release
+        uses: release-drafter/release-drafter@v5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v2
+      - name: Unshallow
+        run: git fetch --prune --tags --unshallow -f
+      - name: Prepare next version
+        id: prepare-version
+        run: |
+          tagName=${{ steps.create_release.outputs.tag_name }}
+          sed -i.bak "s/^version=.*/version=${tagName#"v"}/g" gradle.properties
+          hasChanged=$(git diff --quiet gradle.properties)
+          echo "::set-output name=has-changes::${hasChanged}"
+      - name: Commit updated gradle.properties
+        if: ${ steps.prepare-version.outputs.has-changes == "1" }
+        run: |
+          tagName=${{ steps.create_release.outputs.tag_name }}
+          git config user.name "GitHub Actions"
+          git config user.email noreply@github.com
+          git checkout -b prepare-release/${tagName}
+          git add gradle.properties
+          git commit --message "Prepare release ${tagName}"
+          git push origin prepare-release/${tagName}
+      - name: Create pull request into main
+        if: ${ steps.prepare-version.outputs.has-changes == "1" }
+        uses: thomaseizinger/create-pull-request@1.0.0
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          head: prepare-release/${{ steps.create_release.outputs.tag_name }}
+          base: main
+          title: Update project version
+          reviewers: gesellix
+          body: |
+            Hi!
+            Please keep your project version and Git tags in sync.
+            I've updated the version just in case you forgot about it.
 ...
