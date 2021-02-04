@@ -234,6 +234,7 @@ class DeploymentsStatusUpdater(
               repositoryOwner,
               repositoryName,
               DeploymentRequest(hash).apply {
+                this.auto_merge = false
                 this.environment = environment
                 this.payload = moshi.adapter(Map::class.java).toJson(mapOf(BUILD_ID_KEY to build.buildId.toString()))
                 this.description = "$message (${if (prMergeBranch) "$context - merge" else context})"
