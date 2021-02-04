@@ -9,6 +9,7 @@ data class DeploymentRequest(val ref: String) {
   var task = "deploy"
   var description: String? = null
   var payload: String? = null
+  var auto_merge = true
   var transient_environment = false
   var required_contexts = emptyArray<String>()
 }
