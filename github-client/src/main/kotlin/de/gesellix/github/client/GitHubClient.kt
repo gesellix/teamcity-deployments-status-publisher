@@ -16,6 +16,7 @@ import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
 import okhttp3.logging.HttpLoggingInterceptor
+import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import java.util.concurrent.TimeUnit
@@ -55,9 +56,8 @@ class GitHubClient(
     loggingInterceptor.redactHeader("Cookie")
   }
 
-  fun getRepository(owner: String, repo: String): Repository? {
-    val repoInfo = github.getRepository(owner, repo)
-    val response = repoInfo.execute() // TODO consider `.enqueue()`
+  fun <RES> executeRequest(request: Call<RES>): RES? {
+    val response = request.execute() // TODO consider `.enqueue()`
     if (!response.isSuccessful) {
       throw HttpStatusException(response.code(), "request failed", response)
 //      throw RuntimeException("error: code=${response.code()} body=${response.errorBody()?.string()}")
@@ -65,85 +65,54 @@ class GitHubClient(
     return response.body()
   }
 
+  fun getRepository(owner: String, repo: String): Repository? {
+    val request = github.getRepository(owner, repo)
+    return executeRequest(request)
+  }
+
   fun getCommit(owner: String, repo: String, commitSha: String): Commit? {
-    val repoInfo = github.getCommit(owner, repo, commitSha)
-    val response = repoInfo.execute() // TODO consider `.enqueue()`
-    if (!response.isSuccessful) {
-      throw RuntimeException("error: code=${response.code()} body=${response.errorBody()?.string()}")
-    }
-    return response.body()
+    val request = github.getCommit(owner, repo, commitSha)
+    return executeRequest(request)
   }
 
   fun addCommitComment(owner: String, repo: String, commitSha: String, commitCommentRequest: CommitCommentRequest): CommitComment? {
-    val repoInfo = github.addCommitComment(owner, repo, commitSha, commitCommentRequest)
-    val response = repoInfo.execute() // TODO consider `.enqueue()`
-    if (!response.isSuccessful) {
-      throw RuntimeException("error: code=${response.code()} body=${response.errorBody()?.string()}")
-    }
-    return response.body()
+    val request = github.addCommitComment(owner, repo, commitSha, commitCommentRequest)
+    return executeRequest(request)
   }
 
   fun getCommitStatusesSummary(owner: String, repo: String, ref: String): CommitStatusesSummary? {
-    val status = github.getCommitStatusesSummary(owner, repo, ref)
-    val response = status.execute() // TODO consider `.enqueue()`
-    if (!response.isSuccessful) {
-      throw RuntimeException("error: code=${response.code()} body=${response.errorBody()?.string()}")
-    }
-    return response.body()
+    val request = github.getCommitStatusesSummary(owner, repo, ref)
+    return executeRequest(request)
   }
 
   fun getCommitStatuses(owner: String, repo: String, ref: String): Array<CommitStatus>? {
-    val status = github.getCommitStatuses(owner, repo, ref)
-    val response = status.execute() // TODO consider `.enqueue()`
-    if (!response.isSuccessful) {
-      throw RuntimeException("error: code=${response.code()} body=${response.errorBody()?.string()}")
-    }
-    return response.body()
+    val request = github.getCommitStatuses(owner, repo, ref)
+    return executeRequest(request)
   }
 
   fun updateCommitStatus(owner: String, repo: String, sha: String, commitStatus: CommitStatusRequest): CommitStatus? {
-    val status = github.updateCommitStatus(owner, repo, sha, commitStatus)
-    val response = status.execute() // TODO consider `.enqueue()`
-    if (!response.isSuccessful) {
-      throw RuntimeException("error: code=${response.code()} body=${response.errorBody()?.string()}")
-    }
-    return response.body()
+    val request = github.updateCommitStatus(owner, repo, sha, commitStatus)
+    return executeRequest(request)
   }
 
   fun getPullRequest(owner: String, repo: String, pullNumber: Int): PullRequest? {
-    val status = github.getPullRequest(owner, repo, pullNumber)
-    val response = status.execute() // TODO consider `.enqueue()`
-    if (!response.isSuccessful) {
-      throw RuntimeException("error: code=${response.code()} body=${response.errorBody()?.string()}")
-    }
-    return response.body()
+    val request = github.getPullRequest(owner, repo, pullNumber)
+    return executeRequest(request)
   }
 
   fun getDeployments(owner: String, repo: String, filters: Map<String, String>): List<Deployment>? {
-    val deployments = github.getDeployments(owner, repo, filters)
-    val response = deployments.execute() // TODO consider `.enqueue()`
-    if (!response.isSuccessful) {
-      throw RuntimeException("error: code=${response.code()} body=${response.errorBody()?.string()}")
-    }
-    return response.body()
+    val request = github.getDeployments(owner, repo, filters)
+    return executeRequest(request)
   }
 
   fun createDeployment(owner: String, repo: String, deploymentRequest: DeploymentRequest): Deployment? {
-    val createDeployment = github.createDeployment(owner, repo, deploymentRequest)
-    val response = createDeployment.execute() // TODO consider `.enqueue()`
-    if (!response.isSuccessful) {
-      throw RuntimeException("error: code=${response.code()} body=${response.errorBody()?.string()}")
-    }
-    return response.body()
+    val request = github.createDeployment(owner, repo, deploymentRequest)
+    return executeRequest(request)
   }
 
   fun updateDeploymentStatus(owner: String, repo: String, deploymentId: Long, deploymentStatusRequest: DeploymentStatusRequest): DeploymentStatus? {
-    val updateDeploymentStatus = github.updateDeploymentStatus(owner, repo, deploymentId, deploymentStatusRequest)
-    val response = updateDeploymentStatus.execute() // TODO consider `.enqueue()`
-    if (!response.isSuccessful) {
-      throw RuntimeException("error: code=${response.code()} body=${response.errorBody()?.string()}")
-    }
-    return response.body()
+    val request = github.updateDeploymentStatus(owner, repo, deploymentId, deploymentStatusRequest)
+    return executeRequest(request)
   }
 }
 

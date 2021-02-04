@@ -109,7 +109,7 @@ class GitHubPublisher(
   private fun getDefaultContext(build: SBuild): String {
     val buildType = build.buildType
     return if (buildType != null) {
-      String.format("%s (%s)", buildType.name, buildType.project.name)
+      "${buildType.name} (${buildType.project.name})"
     } else {
       "<Removed build configuration>"
     }
